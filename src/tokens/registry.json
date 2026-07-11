@@ -1,0 +1,1185 @@
+[
+  {
+    "category": "colors",
+    "name": "neutral-0",
+    "cssVar": "--neutral-0",
+    "value": "#FFFFFF",
+    "figma": "Neutral/0",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-50",
+    "cssVar": "--neutral-50",
+    "value": "#F9F9F9",
+    "figma": "Neutral/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-100",
+    "cssVar": "--neutral-100",
+    "value": "#E0E0E0",
+    "figma": "Neutral/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-150",
+    "cssVar": "--neutral-150",
+    "value": "#C6C6C6",
+    "figma": "Neutral/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-200",
+    "cssVar": "--neutral-200",
+    "value": "#ADADAD",
+    "figma": "Neutral/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-250",
+    "cssVar": "--neutral-250",
+    "value": "#939393",
+    "figma": "Neutral/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-300",
+    "cssVar": "--neutral-300",
+    "value": "#7A7A7A",
+    "figma": "Neutral/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-350",
+    "cssVar": "--neutral-350",
+    "value": "#606060",
+    "figma": "Neutral/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-400",
+    "cssVar": "--neutral-400",
+    "value": "#474747",
+    "figma": "Neutral/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-450",
+    "cssVar": "--neutral-450",
+    "value": "#2D2D2D",
+    "figma": "Neutral/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "neutral-500",
+    "cssVar": "--neutral-500",
+    "value": "#141414",
+    "figma": "Neutral/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-50",
+    "cssVar": "--teal-50",
+    "value": "#E8FAF9",
+    "figma": "Teal/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-100",
+    "cssVar": "--teal-100",
+    "value": "#D1F6F2",
+    "figma": "Teal/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-150",
+    "cssVar": "--teal-150",
+    "value": "#BBF1EC",
+    "figma": "Teal/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-200",
+    "cssVar": "--teal-200",
+    "value": "#A4ECE6",
+    "figma": "Teal/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-250",
+    "cssVar": "--teal-250",
+    "value": "#8DE7DF",
+    "figma": "Teal/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-300",
+    "cssVar": "--teal-300",
+    "value": "#76E3D9",
+    "figma": "Teal/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-350",
+    "cssVar": "--teal-350",
+    "value": "#5FDED3",
+    "figma": "Teal/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-400",
+    "cssVar": "--teal-400",
+    "value": "#49D9CD",
+    "figma": "Teal/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-450",
+    "cssVar": "--teal-450",
+    "value": "#32D5C6",
+    "figma": "Teal/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-500",
+    "cssVar": "--teal-500",
+    "value": "#1BD0C0",
+    "figma": "Teal/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "teal-550",
+    "cssVar": "--teal-550",
+    "value": "#006058",
+    "figma": "Teal/550",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "surface-0",
+    "cssVar": "--surface-0",
+    "value": "#FCFCFC",
+    "figma": "Surface/0",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-25",
+    "cssVar": "--red-25",
+    "value": "#FEF5F6",
+    "figma": "Red/25",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-50",
+    "cssVar": "--red-50",
+    "value": "#FCE5E6",
+    "figma": "Red/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-100",
+    "cssVar": "--red-100",
+    "value": "#F9CCCD",
+    "figma": "Red/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-150",
+    "cssVar": "--red-150",
+    "value": "#F6B2B4",
+    "figma": "Red/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-200",
+    "cssVar": "--red-200",
+    "value": "#F3999A",
+    "figma": "Red/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-250",
+    "cssVar": "--red-250",
+    "value": "#F08081",
+    "figma": "Red/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-300",
+    "cssVar": "--red-300",
+    "value": "#ED6668",
+    "figma": "Red/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-350",
+    "cssVar": "--red-350",
+    "value": "#EA4D4F",
+    "figma": "Red/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-400",
+    "cssVar": "--red-400",
+    "value": "#E73336",
+    "figma": "Red/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-450",
+    "cssVar": "--red-450",
+    "value": "#E41A1D",
+    "figma": "Red/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-500",
+    "cssVar": "--red-500",
+    "value": "#E10004",
+    "figma": "Red/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "red-550",
+    "cssVar": "--red-550",
+    "value": "#9E0000",
+    "figma": "Red/550",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-50",
+    "cssVar": "--light-blue-50",
+    "value": "#E5F8FF",
+    "figma": "Light Blue/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-100",
+    "cssVar": "--light-blue-100",
+    "value": "#CCF1FF",
+    "figma": "Light Blue/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-150",
+    "cssVar": "--light-blue-150",
+    "value": "#B2E9FF",
+    "figma": "Light Blue/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-200",
+    "cssVar": "--light-blue-200",
+    "value": "#99E2FF",
+    "figma": "Light Blue/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-250",
+    "cssVar": "--light-blue-250",
+    "value": "#80DBFF",
+    "figma": "Light Blue/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-300",
+    "cssVar": "--light-blue-300",
+    "value": "#66D4FF",
+    "figma": "Light Blue/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-350",
+    "cssVar": "--light-blue-350",
+    "value": "#4DCCFF",
+    "figma": "Light Blue/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-400",
+    "cssVar": "--light-blue-400",
+    "value": "#33C5FF",
+    "figma": "Light Blue/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-450",
+    "cssVar": "--light-blue-450",
+    "value": "#1ABEFF",
+    "figma": "Light Blue/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-500",
+    "cssVar": "--light-blue-500",
+    "value": "#00B7FF",
+    "figma": "Light Blue/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "light-blue-550",
+    "cssVar": "--light-blue-550",
+    "value": "#00658C",
+    "figma": "Light Blue/550",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-50",
+    "cssVar": "--blue-50",
+    "value": "#E9F0FB",
+    "figma": "Blue/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-100",
+    "cssVar": "--blue-100",
+    "value": "#D3E1F7",
+    "figma": "Blue/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-150",
+    "cssVar": "--blue-150",
+    "value": "#BDD2F3",
+    "figma": "Blue/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-200",
+    "cssVar": "--blue-200",
+    "value": "#A7C3EF",
+    "figma": "Blue/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-250",
+    "cssVar": "--blue-250",
+    "value": "#90B4EB",
+    "figma": "Blue/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-300",
+    "cssVar": "--blue-300",
+    "value": "#7AA5E7",
+    "figma": "Blue/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-350",
+    "cssVar": "--blue-350",
+    "value": "#6496E3",
+    "figma": "Blue/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-400",
+    "cssVar": "--blue-400",
+    "value": "#4E87DF",
+    "figma": "Blue/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-450",
+    "cssVar": "--blue-450",
+    "value": "#3879DC",
+    "figma": "Blue/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "blue-500",
+    "cssVar": "--blue-500",
+    "value": "#226AD8",
+    "figma": "Blue/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-25",
+    "cssVar": "--orange-25",
+    "value": "#FFF9F2",
+    "figma": "Orange/25",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-50",
+    "cssVar": "--orange-50",
+    "value": "#FFF4E5",
+    "figma": "Orange/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-100",
+    "cssVar": "--orange-100",
+    "value": "#FFEACC",
+    "figma": "Orange/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-150",
+    "cssVar": "--orange-150",
+    "value": "#FFDFB2",
+    "figma": "Orange/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-200",
+    "cssVar": "--orange-200",
+    "value": "#FFD499",
+    "figma": "Orange/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-250",
+    "cssVar": "--orange-250",
+    "value": "#FFCA80",
+    "figma": "Orange/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-300",
+    "cssVar": "--orange-300",
+    "value": "#FFBF66",
+    "figma": "Orange/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-350",
+    "cssVar": "--orange-350",
+    "value": "#FFB54D",
+    "figma": "Orange/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-400",
+    "cssVar": "--orange-400",
+    "value": "#FFAA33",
+    "figma": "Orange/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-450",
+    "cssVar": "--orange-450",
+    "value": "#FF9F1A",
+    "figma": "Orange/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-500",
+    "cssVar": "--orange-500",
+    "value": "#FF9500",
+    "figma": "Orange/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "orange-550",
+    "cssVar": "--orange-550",
+    "value": "#7A4700",
+    "figma": "Orange/550",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-50",
+    "cssVar": "--green-50",
+    "value": "#F0FAED",
+    "figma": "Green/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-100",
+    "cssVar": "--green-100",
+    "value": "#E1F4DA",
+    "figma": "Green/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-150",
+    "cssVar": "--green-150",
+    "value": "#D2EFC8",
+    "figma": "Green/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-200",
+    "cssVar": "--green-200",
+    "value": "#C2EAB5",
+    "figma": "Green/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-250",
+    "cssVar": "--green-250",
+    "value": "#B3E4A3",
+    "figma": "Green/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-300",
+    "cssVar": "--green-300",
+    "value": "#A4DF91",
+    "figma": "Green/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-350",
+    "cssVar": "--green-350",
+    "value": "#95D97E",
+    "figma": "Green/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-400",
+    "cssVar": "--green-400",
+    "value": "#86D46C",
+    "figma": "Green/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-450",
+    "cssVar": "--green-450",
+    "value": "#77CF59",
+    "figma": "Green/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-500",
+    "cssVar": "--green-500",
+    "value": "#67C947",
+    "figma": "Green/500",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "green-550",
+    "cssVar": "--green-550",
+    "value": "#186000",
+    "figma": "Green/550",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-50",
+    "cssVar": "--purple-50",
+    "value": "#F1ECFB",
+    "figma": "Purple/50",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-100",
+    "cssVar": "--purple-100",
+    "value": "#E4D9F8",
+    "figma": "Purple/100",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-150",
+    "cssVar": "--purple-150",
+    "value": "#D6C6F4",
+    "figma": "Purple/150",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-200",
+    "cssVar": "--purple-200",
+    "value": "#C8B3F0",
+    "figma": "Purple/200",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-250",
+    "cssVar": "--purple-250",
+    "value": "#BAA0EC",
+    "figma": "Purple/250",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-300",
+    "cssVar": "--purple-300",
+    "value": "#AD8DE9",
+    "figma": "Purple/300",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-350",
+    "cssVar": "--purple-350",
+    "value": "#9F79E5",
+    "figma": "Purple/350",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-400",
+    "cssVar": "--purple-400",
+    "value": "#9166E1",
+    "figma": "Purple/400",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-450",
+    "cssVar": "--purple-450",
+    "value": "#8453DD",
+    "figma": "Purple/450",
+    "type": "color"
+  },
+  {
+    "category": "colors",
+    "name": "purple-500",
+    "cssVar": "--purple-500",
+    "value": "#7640DA",
+    "figma": "Purple/500",
+    "type": "color"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-xx-small",
+    "cssVar": "--padding-xx-small",
+    "value": "4px",
+    "figma": "Padding/XX Small",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-x-small",
+    "cssVar": "--padding-x-small",
+    "value": "8px",
+    "figma": "Padding/X Small",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-small",
+    "cssVar": "--padding-small",
+    "value": "12px",
+    "figma": "Padding/Small",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-medium",
+    "cssVar": "--padding-medium",
+    "value": "16px",
+    "figma": "Padding/Medium",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-regular",
+    "cssVar": "--padding-regular",
+    "value": "24px",
+    "figma": "Padding/Regular",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-large",
+    "cssVar": "--padding-large",
+    "value": "36px",
+    "figma": "Padding/Large",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "padding-x-large",
+    "cssVar": "--padding-x-large",
+    "value": "48px",
+    "figma": "Padding/X Large",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "corner-radius-small",
+    "cssVar": "--corner-radius-small",
+    "value": "4px",
+    "figma": "Corner Radius/Small",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "corner-radius-medium",
+    "cssVar": "--corner-radius-medium",
+    "value": "8px",
+    "figma": "Corner Radius/Medium",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "corner-radius-large",
+    "cssVar": "--corner-radius-large",
+    "value": "12px",
+    "figma": "Corner Radius/Large",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "corner-radius-full",
+    "cssVar": "--corner-radius-full",
+    "value": "999px",
+    "figma": "Corner Radius/Full",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "icon-sizes-x-small",
+    "cssVar": "--icon-sizes-x-small",
+    "value": "14px",
+    "figma": "Icon Sizes/X Small",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "icon-sizes-small",
+    "cssVar": "--icon-sizes-small",
+    "value": "18px",
+    "figma": "Icon Sizes/Small",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "icon-sizes-regular",
+    "cssVar": "--icon-sizes-regular",
+    "value": "24px",
+    "figma": "Icon Sizes/Regular",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "icon-sizes-large",
+    "cssVar": "--icon-sizes-large",
+    "value": "32px",
+    "figma": "Icon Sizes/Large",
+    "type": "number"
+  },
+  {
+    "category": "dimensions",
+    "name": "stroke-regular",
+    "cssVar": "--stroke-regular",
+    "value": "1px",
+    "figma": "Stroke/Regular",
+    "type": "number"
+  },
+  {
+    "category": "typography",
+    "name": "font-family",
+    "cssVar": "--typography-font-family",
+    "value": "\"Inter\", system-ui, -apple-system, sans-serif",
+    "figma": "font-family"
+  },
+  {
+    "category": "typography",
+    "name": "xs-regular-font-size",
+    "cssVar": "--typography-xs-regular-font-size",
+    "value": "12px",
+    "figma": "XS/Regular"
+  },
+  {
+    "category": "typography",
+    "name": "xs-regular-font-weight",
+    "cssVar": "--typography-xs-regular-font-weight",
+    "value": "400",
+    "figma": "xs/regular/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "xs-regular-line-height",
+    "cssVar": "--typography-xs-regular-line-height",
+    "value": "normal",
+    "figma": "xs/regular/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "xs-regular-letter-spacing",
+    "cssVar": "--typography-xs-regular-letter-spacing",
+    "value": "0",
+    "figma": "xs/regular/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "small-regular-font-size",
+    "cssVar": "--typography-small-regular-font-size",
+    "value": "14px",
+    "figma": "Small/Regular"
+  },
+  {
+    "category": "typography",
+    "name": "small-regular-font-weight",
+    "cssVar": "--typography-small-regular-font-weight",
+    "value": "400",
+    "figma": "small/regular/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "small-regular-line-height",
+    "cssVar": "--typography-small-regular-line-height",
+    "value": "normal",
+    "figma": "small/regular/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "small-regular-letter-spacing",
+    "cssVar": "--typography-small-regular-letter-spacing",
+    "value": "0",
+    "figma": "small/regular/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "small-medium-font-size",
+    "cssVar": "--typography-small-medium-font-size",
+    "value": "14px",
+    "figma": "Small/Medium"
+  },
+  {
+    "category": "typography",
+    "name": "small-medium-font-weight",
+    "cssVar": "--typography-small-medium-font-weight",
+    "value": "500",
+    "figma": "small/medium/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "small-medium-line-height",
+    "cssVar": "--typography-small-medium-line-height",
+    "value": "normal",
+    "figma": "small/medium/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "small-medium-letter-spacing",
+    "cssVar": "--typography-small-medium-letter-spacing",
+    "value": "0",
+    "figma": "small/medium/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "small-semi-bold-font-size",
+    "cssVar": "--typography-small-semi-bold-font-size",
+    "value": "14px",
+    "figma": "Small/Semi-Bold"
+  },
+  {
+    "category": "typography",
+    "name": "small-semi-bold-font-weight",
+    "cssVar": "--typography-small-semi-bold-font-weight",
+    "value": "600",
+    "figma": "small/semi-bold/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "small-semi-bold-line-height",
+    "cssVar": "--typography-small-semi-bold-line-height",
+    "value": "normal",
+    "figma": "small/semi-bold/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "small-semi-bold-letter-spacing",
+    "cssVar": "--typography-small-semi-bold-letter-spacing",
+    "value": "0",
+    "figma": "small/semi-bold/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "base-regular-font-size",
+    "cssVar": "--typography-base-regular-font-size",
+    "value": "16px",
+    "figma": "Base/Regular"
+  },
+  {
+    "category": "typography",
+    "name": "base-regular-font-weight",
+    "cssVar": "--typography-base-regular-font-weight",
+    "value": "400",
+    "figma": "base/regular/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "base-regular-line-height",
+    "cssVar": "--typography-base-regular-line-height",
+    "value": "22px",
+    "figma": "base/regular/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "base-regular-letter-spacing",
+    "cssVar": "--typography-base-regular-letter-spacing",
+    "value": "0",
+    "figma": "base/regular/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "base-medium-font-size",
+    "cssVar": "--typography-base-medium-font-size",
+    "value": "16px",
+    "figma": "Base/Medium"
+  },
+  {
+    "category": "typography",
+    "name": "base-medium-font-weight",
+    "cssVar": "--typography-base-medium-font-weight",
+    "value": "500",
+    "figma": "base/medium/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "base-medium-line-height",
+    "cssVar": "--typography-base-medium-line-height",
+    "value": "22px",
+    "figma": "base/medium/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "base-medium-letter-spacing",
+    "cssVar": "--typography-base-medium-letter-spacing",
+    "value": "0",
+    "figma": "base/medium/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "base-bold-font-size",
+    "cssVar": "--typography-base-bold-font-size",
+    "value": "16px",
+    "figma": "Base/Bold"
+  },
+  {
+    "category": "typography",
+    "name": "base-bold-font-weight",
+    "cssVar": "--typography-base-bold-font-weight",
+    "value": "700",
+    "figma": "base/bold/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "base-bold-line-height",
+    "cssVar": "--typography-base-bold-line-height",
+    "value": "22px",
+    "figma": "base/bold/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "base-bold-letter-spacing",
+    "cssVar": "--typography-base-bold-letter-spacing",
+    "value": "0",
+    "figma": "base/bold/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "large-regular-font-size",
+    "cssVar": "--typography-large-regular-font-size",
+    "value": "18px",
+    "figma": "Large/Regular"
+  },
+  {
+    "category": "typography",
+    "name": "large-regular-font-weight",
+    "cssVar": "--typography-large-regular-font-weight",
+    "value": "400",
+    "figma": "large/regular/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "large-regular-line-height",
+    "cssVar": "--typography-large-regular-line-height",
+    "value": "normal",
+    "figma": "large/regular/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "large-regular-letter-spacing",
+    "cssVar": "--typography-large-regular-letter-spacing",
+    "value": "0",
+    "figma": "large/regular/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "large-medium-font-size",
+    "cssVar": "--typography-large-medium-font-size",
+    "value": "18px",
+    "figma": "Large/Medium"
+  },
+  {
+    "category": "typography",
+    "name": "large-medium-font-weight",
+    "cssVar": "--typography-large-medium-font-weight",
+    "value": "500",
+    "figma": "large/medium/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "large-medium-line-height",
+    "cssVar": "--typography-large-medium-line-height",
+    "value": "normal",
+    "figma": "large/medium/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "large-medium-letter-spacing",
+    "cssVar": "--typography-large-medium-letter-spacing",
+    "value": "0",
+    "figma": "large/medium/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "xl-regular-font-size",
+    "cssVar": "--typography-xl-regular-font-size",
+    "value": "20px",
+    "figma": "XL/Regular"
+  },
+  {
+    "category": "typography",
+    "name": "xl-regular-font-weight",
+    "cssVar": "--typography-xl-regular-font-weight",
+    "value": "400",
+    "figma": "xl/regular/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "xl-regular-line-height",
+    "cssVar": "--typography-xl-regular-line-height",
+    "value": "normal",
+    "figma": "xl/regular/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "xl-regular-letter-spacing",
+    "cssVar": "--typography-xl-regular-letter-spacing",
+    "value": "0",
+    "figma": "xl/regular/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "xl-semi-bold-font-size",
+    "cssVar": "--typography-xl-semi-bold-font-size",
+    "value": "20px",
+    "figma": "XL/Semi-Bold"
+  },
+  {
+    "category": "typography",
+    "name": "xl-semi-bold-font-weight",
+    "cssVar": "--typography-xl-semi-bold-font-weight",
+    "value": "600",
+    "figma": "xl/semi-bold/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "xl-semi-bold-line-height",
+    "cssVar": "--typography-xl-semi-bold-line-height",
+    "value": "normal",
+    "figma": "xl/semi-bold/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "xl-semi-bold-letter-spacing",
+    "cssVar": "--typography-xl-semi-bold-letter-spacing",
+    "value": "0",
+    "figma": "xl/semi-bold/letter-spacing"
+  },
+  {
+    "category": "typography",
+    "name": "2xl-regular-font-size",
+    "cssVar": "--typography-2xl-regular-font-size",
+    "value": "24px",
+    "figma": "2XL/Regular"
+  },
+  {
+    "category": "typography",
+    "name": "2xl-regular-font-weight",
+    "cssVar": "--typography-2xl-regular-font-weight",
+    "value": "400",
+    "figma": "2xl/regular/font-weight"
+  },
+  {
+    "category": "typography",
+    "name": "2xl-regular-line-height",
+    "cssVar": "--typography-2xl-regular-line-height",
+    "value": "normal",
+    "figma": "2xl/regular/line-height"
+  },
+  {
+    "category": "typography",
+    "name": "2xl-regular-letter-spacing",
+    "cssVar": "--typography-2xl-regular-letter-spacing",
+    "value": "0",
+    "figma": "2xl/regular/letter-spacing"
+  }
+]

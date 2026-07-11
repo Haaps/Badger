@@ -1,0 +1,98 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  border: var(--stroke-regular) solid var(--neutral-100);
+  border-radius: var(--corner-radius-medium);
+  background: var(--neutral-0);
+  overflow: clip;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--padding-x-small);
+  width: 100%;
+  height: 42px;
+  padding: var(--padding-small) 19px;
+  border: none;
+  border-bottom: var(--stroke-regular) solid var(--neutral-100);
+  background: var(--neutral-0);
+  cursor: pointer;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.header:focus-visible {
+  outline: 2px solid var(--teal-500);
+  outline-offset: -2px;
+}
+
+.headerCheckbox {
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.headerLabel {
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  max-height: 386px;
+  margin: 0;
+  padding: var(--padding-x-small);
+  overflow-y: auto;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: var(--padding-x-small);
+  width: 100%;
+  height: 42px;
+  padding: var(--padding-small);
+  border: none;
+  border-radius: var(--corner-radius-small);
+  background: var(--neutral-0);
+  cursor: pointer;
+  text-align: left;
+  overflow: clip;
+}
+
+.item:hover,
+.itemSelected {
+  background: var(--teal-100);
+}
+
+.item:focus-visible {
+  outline: 2px solid var(--teal-500);
+  outline-offset: -2px;
+}
+
+.itemCheckbox {
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.itemLabel {
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-word;
+}

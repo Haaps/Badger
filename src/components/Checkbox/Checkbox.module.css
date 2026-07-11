@@ -1,0 +1,98 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--padding-x-small);
+  cursor: pointer;
+  user-select: none;
+}
+
+.rootDisabled {
+  cursor: not-allowed;
+}
+
+.control {
+  position: relative;
+  display: block;
+  width: var(--icon-sizes-small);
+  height: var(--icon-sizes-small);
+  flex-shrink: 0;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.box {
+  position: absolute;
+  inset: 0;
+  display: block;
+  border: 2px solid var(--neutral-350);
+  border-radius: var(--corner-radius-small);
+  background: var(--neutral-0);
+  box-sizing: border-box;
+  pointer-events: none;
+}
+
+.checked,
+.indeterminate {
+  border-color: transparent;
+  background: var(--teal-500);
+}
+
+.disabled.box {
+  border-color: var(--neutral-100);
+  background: var(--neutral-0);
+}
+
+.disabled.checked,
+.disabled.indeterminate {
+  border-color: transparent;
+  background: var(--teal-200);
+}
+
+.iconLayer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checkIcon {
+  display: block;
+  width: 10.286px;
+  height: 9.429px;
+}
+
+.indeterminateIcon {
+  display: block;
+  width: 8px;
+  height: 2.5px;
+}
+
+.label {
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+}
+
+.rootDisabled .label {
+  color: var(--neutral-200);
+}
+
+.input:focus-visible + .box {
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--teal-500);
+}
+
+.input:active + .box {
+  transform: none;
+}

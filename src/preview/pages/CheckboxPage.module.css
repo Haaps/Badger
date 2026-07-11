@@ -1,0 +1,53 @@
+.page {
+  max-width: 960px;
+}
+
+.header {
+  margin-bottom: 32px;
+}
+
+.name {
+  margin: 0 0 8px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #141414;
+}
+
+.description {
+  margin: 0;
+  max-width: 560px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #666666;
+}
+
+.stage {
+  padding: 48px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.interactive {
+  margin-bottom: 40px;
+}
+
+.sectionLabel {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #666666;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stateGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.stateItem {
+  pointer-events: none;
+}

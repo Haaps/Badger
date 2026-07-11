@@ -1,0 +1,139 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-xx-small);
+  width: 100%;
+  max-width: 360px;
+}
+
+.labelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--padding-x-small);
+  width: 100%;
+}
+
+.fieldLabel {
+  flex: 1 0 0;
+  min-width: 0;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-base-medium-font-size);
+  font-weight: var(--typography-base-medium-font-weight);
+  line-height: var(--typography-base-medium-line-height);
+  letter-spacing: var(--typography-base-medium-letter-spacing);
+  color: var(--neutral-500);
+  word-break: break-word;
+}
+
+.fieldLink {
+  flex: 1 0 0;
+  min-width: 0;
+  border: none;
+  padding: 0;
+  background: transparent;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--light-blue-500);
+  text-align: right;
+  text-decoration: none;
+  cursor: pointer;
+  word-break: break-word;
+}
+
+.fieldLink:hover {
+  color: var(--light-blue-550);
+}
+
+.fieldLinkDisabled {
+  color: var(--neutral-200);
+  cursor: not-allowed;
+  pointer-events: none;
+  text-decoration: none;
+}
+
+.field {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--padding-x-small);
+  width: 100%;
+  height: 48px;
+  padding: var(--padding-medium);
+  border: var(--stroke-regular) solid var(--neutral-200);
+  border-radius: var(--corner-radius-small);
+  background: var(--neutral-0);
+  cursor: pointer;
+  text-align: left;
+  box-sizing: border-box;
+}
+
+.trigger:hover:not(:disabled) {
+  border-color: var(--neutral-350);
+}
+
+.trigger:focus-visible {
+  outline: none;
+  border: 2px solid var(--neutral-500);
+}
+
+.triggerOpen {
+  border: 2px solid var(--neutral-500);
+}
+
+.triggerDisabled {
+  cursor: not-allowed;
+  border-color: var(--neutral-100);
+}
+
+.valueLabel {
+  flex: 1 0 0;
+  min-width: 0;
+  overflow: hidden;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-base-regular-font-size);
+  font-weight: var(--typography-base-regular-font-weight);
+  line-height: var(--typography-base-regular-line-height);
+  letter-spacing: var(--typography-base-regular-letter-spacing);
+  color: var(--neutral-500);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-word;
+}
+
+.placeholder {
+  color: var(--neutral-250);
+}
+
+.triggerDisabled .valueLabel,
+.triggerDisabled .placeholder {
+  color: var(--neutral-200);
+}
+
+.chevron {
+  display: block;
+  width: var(--icon-sizes-small);
+  height: var(--icon-sizes-small);
+  flex-shrink: 0;
+  transition: transform 200ms ease-in-out;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + var(--padding-xx-small));
+  left: 0;
+  z-index: 10;
+  width: 100%;
+}

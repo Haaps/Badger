@@ -1,0 +1,86 @@
+.root {
+  --segment-count: 2;
+  --selected-index: 0;
+
+  position: relative;
+  display: flex;
+  gap: var(--padding-xx-small);
+  width: 250px;
+  height: 36px;
+  padding: var(--padding-xx-small);
+  border-radius: var(--corner-radius-large);
+  background: var(--neutral-100);
+  box-sizing: border-box;
+}
+
+.rootDisabled {
+  cursor: not-allowed;
+}
+
+.indicator {
+  position: absolute;
+  top: var(--padding-xx-small);
+  left: var(--padding-xx-small);
+  z-index: 0;
+  height: 28px;
+  width: calc(
+    (
+        100% - (var(--padding-xx-small) * 2) -
+          (var(--padding-xx-small) * (var(--segment-count) - 1))
+      ) / var(--segment-count)
+  );
+  border-radius: var(--corner-radius-medium);
+  background: var(--neutral-0);
+  pointer-events: none;
+  transform: translateX(
+    calc(var(--selected-index) * (100% + var(--padding-xx-small)))
+  );
+  transition: transform 200ms ease-in-out;
+}
+
+.rootDisabled .indicator {
+  transition: none;
+}
+
+.segment {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex: 1 0 0;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--padding-medium);
+  border: none;
+  border-radius: var(--corner-radius-medium);
+  background: transparent;
+  overflow: clip;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+  white-space: nowrap;
+  word-break: break-word;
+  cursor: pointer;
+}
+
+.segmentSelected {
+  cursor: default;
+}
+
+.segmentUnselectedDisabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.segment:focus-visible {
+  outline: 2px solid var(--teal-500);
+  outline-offset: 2px;
+}
+
+.segment:disabled {
+  cursor: not-allowed;
+}

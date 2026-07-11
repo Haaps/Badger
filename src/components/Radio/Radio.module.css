@@ -1,0 +1,60 @@
+.root {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--padding-x-small);
+  cursor: pointer;
+  user-select: none;
+}
+
+.rootDisabled {
+  cursor: not-allowed;
+}
+
+.control {
+  position: relative;
+  display: block;
+  width: var(--icon-sizes-small);
+  height: var(--icon-sizes-small);
+  flex-shrink: 0;
+}
+
+.input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+.visual {
+  position: absolute;
+  inset: 0;
+  display: block;
+  pointer-events: none;
+}
+
+.icon {
+  display: block;
+  width: var(--icon-sizes-small);
+  height: var(--icon-sizes-small);
+}
+
+.label {
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+}
+
+.rootDisabled .label {
+  color: var(--neutral-200);
+}
+
+.input:focus-visible + .visual {
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px var(--teal-500);
+}

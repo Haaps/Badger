@@ -1,0 +1,146 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--padding-x-small);
+  height: 40px;
+  padding: 0 var(--padding-medium);
+  border: var(--stroke-regular) solid transparent;
+  border-radius: var(--corner-radius-medium);
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-medium-font-size);
+  font-weight: var(--typography-small-medium-font-weight);
+  line-height: var(--typography-small-medium-line-height);
+  letter-spacing: var(--typography-small-medium-letter-spacing);
+  white-space: nowrap;
+  cursor: pointer;
+  box-sizing: border-box;
+  overflow: clip;
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--teal-500);
+  outline-offset: 2px;
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}
+
+.label {
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-medium-font-size);
+  font-weight: var(--typography-small-medium-font-weight);
+  line-height: var(--typography-small-medium-line-height);
+  letter-spacing: var(--typography-small-medium-letter-spacing);
+  word-break: break-word;
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon18 {
+  width: var(--icon-sizes-small);
+  height: var(--icon-sizes-small);
+}
+
+.icon24 {
+  width: var(--icon-sizes-regular);
+  height: var(--icon-sizes-regular);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  flex-shrink: 0;
+  animation: buttonSpin 0.8s linear infinite;
+}
+
+@keyframes buttonSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.primary {
+  background: var(--neutral-500);
+  color: var(--neutral-0);
+}
+
+.primary:hover:not(:disabled),
+.primary[data-preview-state="hover"]:not(:disabled) {
+  background: var(--teal-500);
+  color: var(--neutral-500);
+}
+
+.primary:disabled {
+  background: var(--neutral-200);
+  color: var(--neutral-100);
+}
+
+.primaryLoading:disabled {
+  background: var(--neutral-500);
+  color: var(--neutral-0);
+  cursor: wait;
+}
+
+.secondary {
+  background: var(--neutral-0);
+  border-color: var(--neutral-500);
+  color: var(--neutral-500);
+}
+
+.secondary:hover:not(:disabled),
+.secondary[data-preview-state="hover"]:not(:disabled) {
+  background: var(--neutral-500);
+  border-color: var(--neutral-500);
+  color: var(--neutral-0);
+}
+
+.secondary:disabled {
+  background: var(--neutral-0);
+  border-color: var(--neutral-200);
+  color: var(--neutral-200);
+}
+
+.secondaryLoading:disabled {
+  background: var(--neutral-0);
+  border-color: var(--neutral-500);
+  color: var(--neutral-500);
+  cursor: wait;
+}
+
+.destructive {
+  background: var(--red-500);
+  color: var(--neutral-0);
+}
+
+.destructive:hover:not(:disabled),
+.destructive[data-preview-state="hover"]:not(:disabled) {
+  background: var(--red-550);
+}
+
+.destructive:disabled {
+  background: var(--red-100);
+  color: var(--neutral-0);
+}
+
+.iconOnly {
+  width: 40px;
+  padding: 0;
+  background: transparent;
+  color: var(--neutral-500);
+}
+
+.iconOnly:hover:not(:disabled),
+.iconOnly[data-preview-state="hover"]:not(:disabled) {
+  background: var(--neutral-500);
+  color: var(--neutral-0);
+}

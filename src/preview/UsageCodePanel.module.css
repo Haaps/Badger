@@ -1,0 +1,88 @@
+.panel {
+  margin-top: 32px;
+  padding: 20px;
+  border: 1px solid #e8e8e8;
+  border-radius: 12px;
+  background: #fafafa;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #141414;
+}
+
+.description {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #666666;
+}
+
+.copyButton {
+  flex-shrink: 0;
+  padding: 8px 14px;
+  border: 1px solid #d0d0d0;
+  border-radius: 8px;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #141414;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.copyButton:hover {
+  background: #f5f5f5;
+}
+
+.files {
+  margin: 0 0 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #444444;
+}
+
+.requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.requirements li {
+  font-size: 12px;
+  color: #666666;
+}
+
+.requirements li::before {
+  content: "• ";
+  color: #adadad;
+}
+
+.codeBlock {
+  margin: 0;
+  padding: 16px;
+  overflow-x: auto;
+  border-radius: 8px;
+  background: #141414;
+}
+
+.codeBlock code {
+  font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #f5f5f5;
+  white-space: pre;
+}
