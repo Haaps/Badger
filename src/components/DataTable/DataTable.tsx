@@ -110,7 +110,7 @@ function getSelectionKey(selection: SelectedTableCell | null | undefined) {
   return `${selection.rowId}:${selection.columnId}`;
 }
 
-function scrollCellIntoView(element: HTMLElement | null) {
+function scrollCellIntoView(element: HTMLElement | null | undefined) {
   if (!element) return;
 
   requestAnimationFrame(() => {
