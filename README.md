@@ -38,6 +38,30 @@ If `npm` is not on your PATH:
 
 Open the URL Vite prints (usually `http://localhost:5173`). The sidebar lists all components; each has its own preview page.
 
+## Share online (GitHub Pages)
+
+After you push to GitHub, the gallery can be published automatically.
+
+**Live URL (once deployed):** [https://haaps.github.io/Badger/](https://haaps.github.io/Badger/)
+
+### One-time setup on GitHub
+
+1. Push this repo to [github.com/Haaps/Badger](https://github.com/Haaps/Badger)
+2. Open the repo on GitHub → **Settings** → **Pages**
+3. Under **Build and deployment**, set **Source** to **GitHub Actions**
+4. Push to `main` (or run the **Deploy gallery to GitHub Pages** workflow manually under **Actions**)
+
+The workflow in `.github/workflows/deploy-pages.yml` builds the site and publishes it. Every push to `main` updates the live gallery.
+
+### Test the Pages build locally
+
+```bash
+npm run build:pages
+npm run preview
+```
+
+Then open the URL Vite prints and add `/Badger/` to the path if needed.
+
 ## Adding a new component
 
 1. Create a self-contained folder under `src/components/YourComponent/`

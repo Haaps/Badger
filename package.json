@@ -9,6 +9,7 @@
     "dev": "node scripts/build-tokens.mjs && vite",
     "dev:stop": "bash scripts/dev-stop.sh",
     "build": "node scripts/build-tokens.mjs && tsc -b && vite build",
+    "build:pages": "node scripts/build-tokens.mjs && tsc -b && vite build --mode pages",
     "preview": "vite preview"
   },
   "dependencies": {

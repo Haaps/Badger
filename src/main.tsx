@@ -5,9 +5,11 @@ import { PreviewApp } from "./preview/App";
 import "./tokens/global.css";
 import "./index.css";
 
+const routerBasename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <BrowserRouter>
+    <BrowserRouter basename={routerBasename || undefined}>
       <PreviewApp />
     </BrowserRouter>
   </StrictMode>,
