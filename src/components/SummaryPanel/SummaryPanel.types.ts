@@ -4,6 +4,11 @@ export type SummaryPanelState = "editable" | "staged" | "approved";
 
 export type SummaryApplyScope = "cell" | "holes";
 
+export type SummaryApplyImpact = {
+  rowCount: number;
+  holeCount: number;
+};
+
 export type SummaryPanelProps = {
   /** Invalid value shown in the header message. */
   invalidValue?: string;
@@ -17,6 +22,8 @@ export type SummaryPanelProps = {
   holeOptions?: SelectMenuOption[];
   /** Initial selected drill hole IDs. */
   defaultSelectedHoles?: string[];
+  /** Initial apply scope when the panel mounts or remounts. */
+  defaultApplyScope?: SummaryApplyScope;
   /** Initial workflow state when the panel mounts or remounts. */
   defaultPanelState?: SummaryPanelState;
   /** Pre-filled staged value when opening in staged or approved state. */
@@ -32,6 +39,17 @@ export type SummaryPanelProps = {
   /** Called when the close button is clicked. */
   onClose?: () => void;
   /** Called when the panel workflow state changes (editable, staged, approved). */
-  onPanelStateChange?: (state: SummaryPanelState) => void;
+  onPanelStateChange?: (
+    state: SummaryPanelState,
+    stagedValue?: string,
+    applyScope?: SummaryApplyScope,
+    selectedHoles?: string[],
+  ) => void;
+  /** Computes how many cells and holes the current apply action would affect. */
+  getApplyImpact?: (
+    applyScope: SummaryApplyScope,
+    selectedHoles: string[],
+    panelState: SummaryPanelState,
+  ) => SummaryApplyImpact | null;
   className?: string;
 };

@@ -31,13 +31,18 @@
   background: transparent;
 }
 
+.controls {
+  display: flex;
+  justify-content: flex-end;
+  margin: 0 24px 16px;
+}
+
 .workspace {
-  width: calc(100% + 128px);
-  margin-left: -64px;
-  margin-right: -64px;
+  width: 100%;
+  margin: 24px;
   height: min(72vh, 720px);
   min-height: 480px;
-  border-radius: 0;
+  box-sizing: border-box;
 }
 
 .hint {
