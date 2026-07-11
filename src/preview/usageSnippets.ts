@@ -121,6 +121,7 @@ export function MyView() {
       <Button variant="primary" icon>Save</Button>
       <Button variant="secondary">Cancel</Button>
       <Button variant="destructive">Delete</Button>
+      <Button variant="approval">Approve Update</Button>
       <Button variant="icon" aria-label="Add" />
     </>
   );

@@ -32,11 +32,17 @@ const DESTRUCTIVE_ROWS: TextButtonRow[] = [
   { label: "Disabled", withIcon: true, disabled: true },
 ];
 
+const APPROVAL_ROWS: TextButtonRow[] = [
+  { label: "Default", withIcon: true },
+  { label: "Hover", withIcon: true, previewState: "hover" },
+  { label: "Disabled", withIcon: true, disabled: true },
+];
+
 function TextButtonGrid({
   variant,
   rows,
 }: {
-  variant: "primary" | "secondary" | "destructive";
+  variant: "primary" | "secondary" | "destructive" | "approval";
   rows: TextButtonRow[];
 }) {
   return (
@@ -48,11 +54,11 @@ function TextButtonGrid({
         >
           <span className={styles.stateLabel}>
             {row.label}
-            {row.withIcon ? " + icon" : ""}
+            {row.withIcon && variant !== "approval" ? " + icon" : ""}
           </span>
           <Button
             variant={variant}
-            icon={row.withIcon ? true : undefined}
+            icon={variant === "approval" || row.withIcon ? true : undefined}
             previewState={row.previewState}
             disabled={row.disabled}
             loading={row.loading}
@@ -71,8 +77,9 @@ export function ButtonPage() {
       <header className={styles.header}>
         <h2 className={styles.name}>Button</h2>
         <p className={styles.description}>
-          Primary, secondary, destructive, and icon-only buttons from Figma. Text
-          buttons accept an optional leading icon via the <code>icon</code> prop.
+          Primary, secondary, destructive, approval, and icon-only buttons from
+          Figma. Text buttons accept an optional leading icon via the{" "}
+          <code>icon</code> prop; approval always includes a check-circle icon.
         </p>
       </header>
 
@@ -92,6 +99,7 @@ export function ButtonPage() {
             <Button variant="destructive" icon>
               Button Text
             </Button>
+            <Button variant="approval">Approve Update</Button>
             <Button variant="icon" aria-label="Add" />
           </div>
         </div>
@@ -109,6 +117,11 @@ export function ButtonPage() {
         <div className={styles.section}>
           <h3 className={styles.variantTitle}>Destructive</h3>
           <TextButtonGrid variant="destructive" rows={DESTRUCTIVE_ROWS} />
+        </div>
+
+        <div className={styles.section}>
+          <h3 className={styles.variantTitle}>Approval</h3>
+          <TextButtonGrid variant="approval" rows={APPROVAL_ROWS} />
         </div>
 
         <div className={styles.section}>

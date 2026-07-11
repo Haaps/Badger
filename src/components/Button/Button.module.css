@@ -132,6 +132,21 @@
   color: var(--neutral-0);
 }
 
+.approval {
+  background: var(--green-500);
+  color: var(--neutral-0);
+}
+
+.approval:hover:not(:disabled),
+.approval[data-preview-state="hover"]:not(:disabled) {
+  background: var(--green-550);
+}
+
+.approval:disabled {
+  background: var(--green-200);
+  color: var(--neutral-0);
+}
+
 .iconOnly {
   width: 40px;
   padding: 0;

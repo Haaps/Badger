@@ -1,6 +1,11 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 
-export type ButtonVariant = "primary" | "secondary" | "destructive" | "icon";
+export type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "destructive"
+  | "approval"
+  | "icon";
 
 export type ButtonPreviewState = "hover";
 
