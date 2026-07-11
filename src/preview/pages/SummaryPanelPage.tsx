@@ -35,7 +35,7 @@ export function SummaryPanelPage() {
               </Button>
             </div>
 
-            <SummaryPanel key={panelKey} onClose={() => undefined} />
+            <SummaryPanel key={panelKey} defaultCollapsed={false} onClose={() => undefined} />
 
             <p className={styles.hint}>
               Try this flow:

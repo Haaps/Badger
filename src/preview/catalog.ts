@@ -7,6 +7,7 @@ import { StackedBarChartPage } from "./pages/StackedBarChartPage";
 import { SegmentedControlPage } from "./pages/SegmentedControlPage";
 import { MultiSelectMenuPage } from "./pages/MultiSelectMenuPage";
 import { SingleSelectPage } from "./pages/SingleSelectPage";
+import { DataTablePage } from "./pages/DataTablePage";
 import { SummaryPanelPage } from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
 import { TextFieldPage } from "./pages/TextFieldPage";
@@ -78,5 +79,10 @@ export const componentCatalog: ComponentEntry[] = [
     path: "summary-panel",
     label: "Summary Panel",
     Page: SummaryPanelPage,
+  },
+  {
+    path: "data-table",
+    label: "Data Table",
+    Page: DataTablePage,
   },
 ];

@@ -157,15 +157,39 @@ export function SummaryPanel({
   valueOptions = DEMO_VALUE_OPTIONS,
   holeOptions = DEMO_HOLE_OPTIONS,
   defaultSelectedHoles = DEMO_DEFAULT_SELECTED_HOLES,
+  defaultPanelState = "editable",
+  initialStagedValue = "bnd",
+  collapsed: collapsedProp,
+  defaultCollapsed = true,
+  onCollapsedChange,
+  fillHeight = false,
   onClose,
+  onPanelStateChange,
   className,
 }: SummaryPanelProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [panelState, setPanelState] = useState<SummaryPanelState>("editable");
+  const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
+  const isCollapsedControlled = collapsedProp !== undefined;
+  const collapsed = isCollapsedControlled ? collapsedProp : internalCollapsed;
+
+  const setCollapsed = (nextCollapsed: boolean) => {
+    if (!isCollapsedControlled) {
+      setInternalCollapsed(nextCollapsed);
+    }
+    onCollapsedChange?.(nextCollapsed);
+  };
+
+  const opensInCommittedState =
+    defaultPanelState === "staged" || defaultPanelState === "approved";
+
+  const [panelState, setPanelState] = useState<SummaryPanelState>(defaultPanelState);
   const [valueInputMode, setValueInputMode] = useState<ValueInputMode>("select");
-  const [selectedValue, setSelectedValue] = useState("");
+  const [selectedValue, setSelectedValue] = useState(
+    opensInCommittedState ? initialStagedValue : "",
+  );
   const [customValue, setCustomValue] = useState("");
-  const [stagedValue, setStagedValue] = useState("");
+  const [stagedValue, setStagedValue] = useState(
+    opensInCommittedState ? initialStagedValue : "",
+  );
   const [stagedApplyScope, setStagedApplyScope] = useState<SummaryApplyScope>("cell");
   const [applyScope, setApplyScope] = useState<SummaryApplyScope>("cell");
   const [selectedHoles, setSelectedHoles] = useState<string[]>(defaultSelectedHoles);
@@ -200,6 +224,7 @@ export function SummaryPanel({
 
   const panelClassNames = [
     styles.panel,
+    fillHeight && styles.panelFillHeight,
     collapsed && styles.panelCollapsed,
     className,
   ]
@@ -227,6 +252,7 @@ export function SummaryPanel({
     setStagedApplyScope(applyScope);
     setStagedDetailsExpanded(false);
     setPanelState("staged");
+    onPanelStateChange?.("staged");
   };
 
   const handleUpdateStaged = () => {
@@ -241,11 +267,13 @@ export function SummaryPanel({
     setStagedDetailsExpanded(false);
     setApprovedDetailsExpanded(false);
     setPanelState("approved");
+    onPanelStateChange?.("approved");
   };
 
   const handleRevertToStaged = () => {
     setApprovedDetailsExpanded(false);
     setPanelState("staged");
+    onPanelStateChange?.("staged");
   };
 
   const handleApplyScopeChange = (nextScope: string) => {
@@ -308,7 +336,7 @@ export function SummaryPanel({
         className={styles.sidebar}
         aria-expanded={!collapsed}
         aria-label={collapsed ? "Expand summary panel" : "Collapse summary panel"}
-        onClick={() => setCollapsed((current) => !current)}
+        onClick={() => setCollapsed(!collapsed)}
       >
         <div className={styles.sidebarInner}>
           <img

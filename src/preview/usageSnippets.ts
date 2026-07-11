@@ -218,8 +218,24 @@ export function MyView() {
       invalidValue="xyz123"
       cellCount={12}
       holeCount={5}
+      defaultCollapsed={false}
       onClose={() => undefined}
     />
+  );
+}`,
+};
+
+export const dataTableUsage = {
+  filesToCopy:
+    "Copy src/components/DataTable/, src/components/SummaryPanel/, src/components/FilterBar/icons/, src/components/SingleSelect/, src/components/TextField/, src/components/MultiSelectMenu/, src/components/SelectMenu/, src/components/SegmentedControl/, src/components/Button/, and src/components/Checkbox/ into your project.",
+  requirements: SHARED_REQUIREMENTS,
+  code: `import { DataTableWithSummary } from "@/components/DataTable";
+
+export function MyView() {
+  return (
+    <div style={{ height: 640 }}>
+      <DataTableWithSummary />
+    </div>
   );
 }`,
 };

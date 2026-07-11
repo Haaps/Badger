@@ -6,6 +6,12 @@
   border-radius: 0 var(--corner-radius-medium) var(--corner-radius-medium) 0;
   background: var(--neutral-0);
   overflow: clip;
+  flex-shrink: 0;
+}
+
+.panelFillHeight {
+  height: 100%;
+  min-height: 0;
 }
 
 .panelCollapsed {
@@ -13,9 +19,17 @@
   min-height: 640px;
 }
 
+.panelCollapsed.panelFillHeight {
+  min-height: 0;
+}
+
 .panelCollapsed .sidebar {
   min-height: 640px;
   border-right: none;
+}
+
+.panelCollapsed.panelFillHeight .sidebar {
+  min-height: 100%;
 }
 
 .sidebar {

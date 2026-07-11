@@ -6,6 +6,8 @@
 .sidebar {
   position: sticky;
   top: 0;
+  display: flex;
+  flex-direction: column;
   flex-shrink: 0;
   width: 240px;
   height: 100vh;
@@ -14,10 +16,30 @@
   background: #fafafa;
   overflow-y: auto;
   box-sizing: border-box;
+  transition: width 200ms ease, padding 200ms ease;
+}
+
+.sidebarCollapsed {
+  width: 56px;
+  padding: 32px 12px;
+}
+
+.sidebarTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.sidebarCollapsed .sidebarTop {
+  justify-content: center;
+  margin-bottom: 0;
 }
 
 .sidebarHeader {
-  margin-bottom: 24px;
+  flex: 1 0 0;
+  min-width: 0;
   padding: 0 8px;
 }
 
@@ -36,6 +58,37 @@
   font-weight: 700;
   line-height: 1.2;
   color: #141414;
+}
+
+.toggleButton {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #141414;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease;
+}
+
+.toggleButton:hover {
+  background: #f0f0f0;
+  border-color: #d8d8d8;
+}
+
+.toggleButton:focus-visible {
+  outline: 2px solid #1bd0c0;
+  outline-offset: 2px;
+}
+
+.toggleIcon {
+  width: 16px;
+  height: 16px;
 }
 
 .nav {
