@@ -37,7 +37,7 @@
 }
 
 .interactive:last-of-type {
-  margin-bottom: 0;
+  margin-bottom: 48px;
 }
 
 .sectionLabel {
@@ -47,4 +47,23 @@
   color: #666666;
   text-transform: uppercase;
   letter-spacing: 0.04em;
+}
+
+.stateGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.stateItem {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stateName {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #888888;
 }

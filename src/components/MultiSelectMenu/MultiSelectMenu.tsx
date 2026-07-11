@@ -7,10 +7,17 @@ export function MultiSelectMenu({
   options,
   onChange,
   allLabel = "All",
+  fillHeight = false,
   className,
   "aria-label": ariaLabel = "Multi select menu",
 }: MultiSelectMenuProps) {
-  const rootClassNames = [styles.multiSelectMenu, className].filter(Boolean).join(" ");
+  const rootClassNames = [
+    styles.multiSelectMenu,
+    fillHeight && styles.multiSelectMenuFill,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <SelectMenuPanel
@@ -19,6 +26,7 @@ export function MultiSelectMenu({
       options={options}
       onChange={onChange}
       allLabel={allLabel}
+      fillHeight={fillHeight}
       showAllHeader
       showCheckboxes
       className={rootClassNames}

@@ -1,10 +1,8 @@
-import type { ReactNode } from "react";
-import type { SelectMenuOption } from "../SelectMenu";
+import type { InputHTMLAttributes, ReactNode } from "react";
 
-export type SingleSelectProps = {
-  value: string;
-  options: SelectMenuOption[];
-  onChange?: (value: string) => void;
+export type TextFieldPreviewState = "focus";
+
+export type TextFieldProps = Omit<InputHTMLAttributes<HTMLInputElement>, "size"> & {
   /** Optional label shown above the field. */
   label?: ReactNode;
   /** Optional action link shown opposite the label. Omit when not needed. */
@@ -13,10 +11,8 @@ export type SingleSelectProps = {
   linkHref?: string;
   /** Click handler when the link renders as a button. Use with `linkText`. */
   onLinkClick?: () => void;
-  placeholder?: string;
-  disabled?: boolean;
-  className?: string;
-  "aria-label"?: string;
+  error?: boolean;
+  errorMessage?: ReactNode;
+  /** Gallery-only visual state. */
+  previewState?: TextFieldPreviewState;
 };
-
-export { createHoleOptions } from "../SelectMenu";

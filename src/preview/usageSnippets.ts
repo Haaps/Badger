@@ -179,6 +179,48 @@ export function MyView() {
       aria-label="Hole selection"
     />
   );
+}
+
+// Optional label-row link — add linkText (and linkHref or onLinkClick) when needed.`,
+};
+
+export const textFieldUsage = {
+  filesToCopy: "Copy src/components/TextField/ into your project.",
+  requirements: SHARED_REQUIREMENTS,
+  code: `import { useState } from "react";
+import { TextField } from "@/components/TextField";
+
+export function MyView() {
+  const [value, setValue] = useState("");
+
+  return (
+    <TextField
+      label="Field Label"
+      placeholder="Placeholder text"
+      value={value}
+      onChange={(event) => setValue(event.target.value)}
+    />
+  );
+}
+
+// Optional label-row link — add linkText (and linkHref or onLinkClick) when needed.`,
+};
+
+export const summaryPanelUsage = {
+  filesToCopy:
+    "Copy src/components/SummaryPanel/, src/components/SingleSelect/, src/components/TextField/, src/components/MultiSelectMenu/, src/components/SelectMenu/, src/components/SegmentedControl/, src/components/Button/, and src/components/Checkbox/ into your project.",
+  requirements: SHARED_REQUIREMENTS,
+  code: `import { SummaryPanel } from "@/components/SummaryPanel";
+
+export function MyView() {
+  return (
+    <SummaryPanel
+      invalidValue="xyz123"
+      cellCount={12}
+      holeCount={5}
+      onClose={() => undefined}
+    />
+  );
 }`,
 };
 

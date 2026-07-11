@@ -7,7 +7,9 @@ import { StackedBarChartPage } from "./pages/StackedBarChartPage";
 import { SegmentedControlPage } from "./pages/SegmentedControlPage";
 import { MultiSelectMenuPage } from "./pages/MultiSelectMenuPage";
 import { SingleSelectPage } from "./pages/SingleSelectPage";
+import { SummaryPanelPage } from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
+import { TextFieldPage } from "./pages/TextFieldPage";
 import { TokensPage } from "./pages/TokensPage";
 
 export type ComponentEntry = {
@@ -66,5 +68,15 @@ export const componentCatalog: ComponentEntry[] = [
     path: "single-select",
     label: "Single Select",
     Page: SingleSelectPage,
+  },
+  {
+    path: "text-field",
+    label: "Text Field",
+    Page: TextFieldPage,
+  },
+  {
+    path: "summary-panel",
+    label: "Summary Panel",
+    Page: SummaryPanelPage,
   },
 ];

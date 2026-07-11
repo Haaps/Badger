@@ -7,6 +7,7 @@ type SelectMenuPanelBaseProps = {
   showCheckboxes?: boolean;
   showAllHeader?: boolean;
   allLabel?: string;
+  fillHeight?: boolean;
   className?: string;
   "aria-label"?: string;
 };
@@ -34,11 +35,18 @@ export function SelectMenuPanel(props: SelectMenuPanelProps) {
     showCheckboxes = mode === "multi",
     showAllHeader = mode === "multi",
     allLabel = "All",
+    fillHeight = false,
     className,
     "aria-label": ariaLabel = "Select menu",
   } = props;
 
-  const panelClassNames = [styles.panel, className].filter(Boolean).join(" ");
+  const panelClassNames = [
+    styles.panel,
+    fillHeight && styles.panelFill,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   if (mode === "multi") {
     const { value, onChange } = props;

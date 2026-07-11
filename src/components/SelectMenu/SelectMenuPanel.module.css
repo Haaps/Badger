@@ -8,6 +8,18 @@
   overflow: clip;
 }
 
+.panelFill {
+  flex: 1 1 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.panelFill .list {
+  flex: 1 1 0;
+  min-height: 0;
+  max-height: none;
+}
+
 .header {
   display: flex;
   align-items: center;

@@ -6,6 +6,7 @@ export type MultiSelectMenuProps = {
   options: import("../SelectMenu").SelectMenuOption[];
   onChange?: (value: string[]) => void;
   allLabel?: string;
+  fillHeight?: boolean;
   className?: string;
   "aria-label"?: string;
 };
