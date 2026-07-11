@@ -130,12 +130,18 @@ export function DataTable({
   const selectedCellRef = useRef<HTMLButtonElement | null>(null);
 
   const handleCellClick = useCallback(
-    (row: DataTableRow, column: DataTableColumn, cell: DataTableCellValue) => {
+    (
+      row: DataTableRow,
+      column: DataTableColumn,
+      cell: DataTableCellValue,
+      button: HTMLButtonElement,
+    ) => {
       onCellSelect?.({
         rowId: row.id,
         columnId: column.id,
         cell,
       });
+      button.blur();
     },
     [onCellSelect],
   );
@@ -202,7 +208,9 @@ export function DataTable({
                       type="button"
                       ref={isSelected ? selectedCellRef : undefined}
                       className={styles.cellButton}
-                      onClick={() => handleCellClick(row, column, config)}
+                      onClick={(event) =>
+                        handleCellClick(row, column, config, event.currentTarget)
+                      }
                       aria-pressed={isSelected}
                     >
                       <span className={styles.cellText}>{text}</span>
