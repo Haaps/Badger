@@ -1,9 +1,10 @@
 .page {
-  max-width: 1200px;
+  width: 100%;
+  max-width: none;
 }
 
 .header {
-  margin-bottom: 48px;
+  margin-bottom: 32px;
 }
 
 .name {
@@ -23,14 +24,20 @@
 }
 
 .stage {
-  padding: 48px;
-  border: 1px solid #e8e8e8;
-  border-radius: 12px;
-  background: #ffffff;
+  width: 100%;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
 }
 
 .workspace {
-  height: 640px;
+  width: calc(100% + 128px);
+  margin-left: -64px;
+  margin-right: -64px;
+  height: min(72vh, 720px);
+  min-height: 480px;
+  border-radius: 0;
 }
 
 .hint {
