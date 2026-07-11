@@ -1,4 +1,4 @@
-import type { SummaryPanelState } from "../SummaryPanel";
+import type { SummaryPanelState, SummaryApplyScope } from "../SummaryPanel";
 
 export type TableCellStatus = "error" | "staged" | "approved";
 
@@ -10,6 +10,10 @@ export type DataTableCellValue = {
   cellCount?: number;
   holeCount?: number;
   initialStagedValue?: string;
+  /** How this correction was applied (restored when re-selecting the cell). */
+  applyScope?: SummaryApplyScope;
+  /** Drill holes included when applyScope is "holes". */
+  appliedHoles?: string[];
 };
 
 export type DataTableColumn = {

@@ -1,6 +1,7 @@
 export { SummaryPanel } from "./SummaryPanel";
 export type {
   SummaryApplyScope,
+  SummaryApplyImpact,
   SummaryPanelProps,
   SummaryPanelState,
 } from "./SummaryPanel.types";

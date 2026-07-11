@@ -13,10 +13,14 @@ import {
   DEMO_HOLE_OPTIONS,
   DEMO_INVALID_VALUE,
   DEMO_VALUE_OPTIONS,
-  DEMO_AFFECTED_ROWS,
 } from "./SummaryPanel.demoData";
 import type { SelectMenuOption } from "../SelectMenu";
-import type { SummaryApplyScope, SummaryPanelProps, SummaryPanelState } from "./SummaryPanel.types";
+import type {
+  SummaryApplyImpact,
+  SummaryApplyScope,
+  SummaryPanelProps,
+  SummaryPanelState,
+} from "./SummaryPanel.types";
 import styles from "./SummaryPanel.module.css";
 
 const APPLY_SCOPE_OPTIONS = [
@@ -62,16 +66,24 @@ function ApprovedIcon() {
   );
 }
 
+function formatCountLabel(count: number, singular: string, plural: string) {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 function getFooterNote(
   applyScope: SummaryApplyScope,
   panelState: SummaryPanelState,
-  selectedHoleCount: number,
+  applyImpact: SummaryApplyImpact | null | undefined,
 ) {
   if (panelState === "approved" || applyScope === "cell") {
     return "Change will affect this cell only.";
   }
 
-  return `Change will affect ${DEMO_AFFECTED_ROWS} rows across ${selectedHoleCount} holes.`;
+  if (!applyImpact || applyImpact.rowCount === 0) {
+    return "Change will affect this cell only.";
+  }
+
+  return `Change will affect ${formatCountLabel(applyImpact.rowCount, "row", "rows")} across ${formatCountLabel(applyImpact.holeCount, "hole", "holes")}.`;
 }
 
 function getTitle(panelState: SummaryPanelState) {
@@ -157,6 +169,7 @@ export function SummaryPanel({
   valueOptions = DEMO_VALUE_OPTIONS,
   holeOptions = DEMO_HOLE_OPTIONS,
   defaultSelectedHoles = DEMO_DEFAULT_SELECTED_HOLES,
+  defaultApplyScope = "cell",
   defaultPanelState = "editable",
   initialStagedValue = "bnd",
   collapsed: collapsedProp,
@@ -165,6 +178,7 @@ export function SummaryPanel({
   fillHeight = false,
   onClose,
   onPanelStateChange,
+  getApplyImpact,
   className,
 }: SummaryPanelProps) {
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
@@ -190,8 +204,8 @@ export function SummaryPanel({
   const [stagedValue, setStagedValue] = useState(
     opensInCommittedState ? initialStagedValue : "",
   );
-  const [stagedApplyScope, setStagedApplyScope] = useState<SummaryApplyScope>("cell");
-  const [applyScope, setApplyScope] = useState<SummaryApplyScope>("cell");
+  const [stagedApplyScope, setStagedApplyScope] = useState<SummaryApplyScope>(defaultApplyScope);
+  const [applyScope, setApplyScope] = useState<SummaryApplyScope>(defaultApplyScope);
   const [selectedHoles, setSelectedHoles] = useState<string[]>(defaultSelectedHoles);
   const [stagedDetailsExpanded, setStagedDetailsExpanded] = useState(false);
   const [approvedDetailsExpanded, setApprovedDetailsExpanded] = useState(false);
@@ -210,6 +224,11 @@ export function SummaryPanel({
   const canUpdateStaged = isStaged && currentValue !== "" && hasStagedChanges;
 
   const committedValueLabel = resolveDisplayValue(stagedValue, valueOptions);
+
+  const applyImpact = useMemo(
+    () => getApplyImpact?.(applyScope, selectedHoles, panelState),
+    [getApplyImpact, applyScope, selectedHoles, panelState],
+  );
 
   const segmentedOptions = useMemo(() => {
     if (!isApproved) {
@@ -252,13 +271,14 @@ export function SummaryPanel({
     setStagedApplyScope(applyScope);
     setStagedDetailsExpanded(false);
     setPanelState("staged");
-    onPanelStateChange?.("staged");
+    onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
   };
 
   const handleUpdateStaged = () => {
     if (!canUpdateStaged) return;
     setStagedValue(currentValue);
     setStagedApplyScope(applyScope);
+    onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
   };
 
   const handleApprove = () => {
@@ -267,18 +287,22 @@ export function SummaryPanel({
     setStagedDetailsExpanded(false);
     setApprovedDetailsExpanded(false);
     setPanelState("approved");
-    onPanelStateChange?.("approved");
+    onPanelStateChange?.("approved", currentValue, applyScope, selectedHoles);
   };
 
   const handleRevertToStaged = () => {
     setApprovedDetailsExpanded(false);
     setPanelState("staged");
-    onPanelStateChange?.("staged");
+    onPanelStateChange?.("staged", stagedValue, applyScope, selectedHoles);
   };
 
   const handleApplyScopeChange = (nextScope: string) => {
     if (isApproved) return;
-    setApplyScope(nextScope as SummaryApplyScope);
+    const scope = nextScope as SummaryApplyScope;
+    setApplyScope(scope);
+    if (scope === "holes" && defaultSelectedHoles.length > 0) {
+      setSelectedHoles(defaultSelectedHoles);
+    }
   };
 
   const handleAddNewValue = () => {
@@ -368,8 +392,9 @@ export function SummaryPanel({
               {isEditable && (
                 <div className={styles.messageBlock}>
                   <p className={styles.summaryText}>
-                    &ldquo;{invalidValue}&rdquo; appears in {cellCount} cells across {holeCount}{" "}
-                    holes.
+                    &ldquo;{invalidValue}&rdquo; appears in{" "}
+                    {formatCountLabel(cellCount, "cell", "cells")} across{" "}
+                    {formatCountLabel(holeCount, "hole", "holes")}.
                   </p>
                   <p className={styles.helperText}>
                     Choose or create a valid value to replace it.
@@ -447,7 +472,7 @@ export function SummaryPanel({
                   </Button>
                 </div>
                 <p className={styles.footerNote}>
-                  {getFooterNote(applyScope, panelState, selectedHoles.length)}
+                  {getFooterNote(applyScope, panelState, applyImpact)}
                 </p>
               </>
             )}
@@ -472,7 +497,7 @@ export function SummaryPanel({
                   </Button>
                 </div>
                 <p className={styles.footerNote}>
-                  {getFooterNote(applyScope, panelState, selectedHoles.length)}
+                  {getFooterNote(applyScope, panelState, applyImpact)}
                 </p>
               </>
             )}
