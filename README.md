@@ -64,10 +64,12 @@ Then open the URL Vite prints and add `/Badger/` to the path if needed.
 
 ## Adding a new component
 
-1. Create a self-contained folder under `src/components/YourComponent/`
+1. Create a self-contained folder under `src/components/YourComponent/` (include `icons/` if the design uses SVGs)
 2. Add a preview page at `src/preview/pages/YourComponentPage.tsx`
 3. Register it in `src/preview/catalog.ts`
 4. Add a usage snippet in `src/preview/usageSnippets.ts` and render `<UsageCodePanel />` on the preview page
+5. Update `src/preview/pages/HowToUsePage.tsx` when the change affects target app requirements, validation types, component dependencies, icons, or integration patterns
+6. Update this README when handoff examples or repo-level requirements change
 
 ```ts
 {
@@ -123,5 +125,7 @@ Bar is fixed at **225×8px**. Segments are proportional to the total of all thre
 
 - React 18+
 - CSS Modules (`*.module.css`)
-- SVG imports as URLs
 - Inter font (or override tokens in `tokens.css`)
+- No SVG asset pipeline — icons are embedded React components in each component's `icons/` folder
+
+See **How to Use** in the gallery (`/how-to-use`) for the full integration guide, validation matrix, and maintainer checklist.

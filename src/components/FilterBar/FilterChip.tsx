@@ -12,6 +12,7 @@ export function FilterChip({
   renderIcon,
 }: FilterChipProps) {
   const [hovered, setHovered] = useState(false);
+  // Hover uses the active icon/style even when the chip is not selected.
   const showActiveStyle = selected || hovered;
 
   const classNames = [

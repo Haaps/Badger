@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { componentCatalog } from "./catalog";
+import type { ComponentEntry } from "./catalog";
 import styles from "./PreviewLayout.module.css";
 
 const SIDEBAR_COLLAPSED_KEY = "badger-preview-sidebar-collapsed";
@@ -31,6 +32,46 @@ function SidebarToggleIcon({ collapsed }: { collapsed: boolean }) {
         />
       )}
     </svg>
+  );
+}
+
+function NavItem({ entry }: { entry: ComponentEntry }) {
+  if (entry.children?.length) {
+    return (
+      <div className={styles.navGroup}>
+        <p className={styles.navGroupLabel}>{entry.label}</p>
+        <div className={styles.navGroupItems}>
+          {entry.children.map((child) => (
+            <NavLink
+              key={child.path}
+              to={child.path}
+              className={({ isActive }) =>
+                [styles.navLink, styles.navSubLink, isActive && styles.navLinkActive]
+                  .filter(Boolean)
+                  .join(" ")
+              }
+            >
+              {child.label}
+            </NavLink>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!entry.Page) {
+    return null;
+  }
+
+  return (
+    <NavLink
+      to={entry.path}
+      className={({ isActive }) =>
+        [styles.navLink, isActive && styles.navLinkActive].filter(Boolean).join(" ")
+      }
+    >
+      {entry.label}
+    </NavLink>
   );
 }
 
@@ -79,19 +120,17 @@ export function PreviewLayout() {
 
         {!collapsed && (
           <nav className={styles.nav} aria-label="Component gallery">
-            {componentCatalog.map(({ path, label }) => (
-              <NavLink
-                key={path}
-                to={path}
-                className={({ isActive }) =>
-                  [styles.navLink, isActive && styles.navLinkActive]
-                    .filter(Boolean)
-                    .join(" ")
-                }
-              >
-                {label}
-              </NavLink>
-            ))}
+            {componentCatalog
+              .filter((entry) => entry.isGuide)
+              .map((entry) => (
+                <NavItem key={entry.path} entry={entry} />
+              ))}
+            <div className={styles.navDivider} aria-hidden="true" />
+            {componentCatalog
+              .filter((entry) => !entry.isGuide)
+              .map((entry) => (
+                <NavItem key={entry.path} entry={entry} />
+              ))}
           </nav>
         )}
       </aside>

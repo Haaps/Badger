@@ -97,6 +97,33 @@
   gap: 4px;
 }
 
+.navDivider {
+  height: 1px;
+  margin: 12px 8px;
+  background: #e8e8e8;
+}
+
+.navGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.navGroupLabel {
+  margin: 8px 12px 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #888888;
+}
+
+.navGroupItems {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .navLink {
   display: block;
   padding: 10px 12px;
@@ -116,6 +143,10 @@
   background: #e8faf9;
   color: #141414;
   font-weight: 500;
+}
+
+.navSubLink {
+  padding-left: 24px;
 }
 
 .main {

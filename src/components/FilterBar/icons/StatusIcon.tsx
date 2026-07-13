@@ -1,22 +1,24 @@
-import errorInactive from "../assets/error-inactive.svg";
-import errorActive from "../assets/error-active.svg";
-import stagedInactive from "../assets/staged-inactive.svg";
-import stagedActive from "../assets/staged-active.svg";
-import approvedInactive from "../assets/approved-inactive.svg";
-import approvedActive from "../assets/approved-active.svg";
+import type { ComponentType } from "react";
+import {
+  ApprovedActiveIcon,
+  ApprovedInactiveIcon,
+  ErrorActiveIcon,
+  ErrorInactiveIcon,
+  StagedActiveIcon,
+  StagedInactiveIcon,
+} from "../icons";
 import type { StatusFilter } from "../FilterBar.types";
 
+type IconComponent = ComponentType<{ className?: string }>;
+
+/** Active/inactive SVG pairs per status — copy FilterBar/icons/ with the component. */
 const ICONS: Record<
   StatusFilter,
-  { inactive: string; active: string; alt: string }
+  { inactive: IconComponent; active: IconComponent }
 > = {
-  errors: { inactive: errorInactive, active: errorActive, alt: "Errors" },
-  staged: { inactive: stagedInactive, active: stagedActive, alt: "Staged" },
-  approved: {
-    inactive: approvedInactive,
-    active: approvedActive,
-    alt: "Approved",
-  },
+  errors: { inactive: ErrorInactiveIcon, active: ErrorActiveIcon },
+  staged: { inactive: StagedInactiveIcon, active: StagedActiveIcon },
+  approved: { inactive: ApprovedInactiveIcon, active: ApprovedActiveIcon },
 };
 
 type StatusIconProps = {
@@ -26,16 +28,7 @@ type StatusIconProps = {
 };
 
 export function StatusIcon({ variant, active, className }: StatusIconProps) {
-  const icon = ICONS[variant];
+  const Icon = active ? ICONS[variant].active : ICONS[variant].inactive;
 
-  return (
-    <img
-      src={active ? icon.active : icon.inactive}
-      alt=""
-      aria-hidden="true"
-      className={className}
-      width={14}
-      height={14}
-    />
-  );
+  return <Icon className={className} />;
 }

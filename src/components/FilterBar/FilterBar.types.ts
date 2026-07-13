@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 export type StatusFilter = "errors" | "staged" | "approved";
 
+/** Discriminated union: show all statuses, or an explicit subset (empty → treated as all). */
 export type FilterBarValue =
   | { mode: "all" }
   | { mode: "specific"; filters: StatusFilter[] };

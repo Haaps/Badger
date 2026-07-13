@@ -1,12 +1,13 @@
-import errorIcon from "../assets/error.svg";
-import stagedIcon from "../assets/staged.svg";
-import approvedIcon from "../assets/approved.svg";
+import type { ComponentType } from "react";
+import { ApprovedIcon, ErrorIcon, StagedIcon } from "../icons";
 import type { StackedBarChartCounts } from "../StackedBarChart.types";
 
-const ICONS: Record<keyof StackedBarChartCounts, string> = {
-  errors: errorIcon,
-  staged: stagedIcon,
-  approved: approvedIcon,
+type IconComponent = ComponentType<{ className?: string }>;
+
+const ICONS: Record<keyof StackedBarChartCounts, IconComponent> = {
+  errors: ErrorIcon,
+  staged: StagedIcon,
+  approved: ApprovedIcon,
 };
 
 type ChartLegendIconProps = {
@@ -15,14 +16,7 @@ type ChartLegendIconProps = {
 };
 
 export function ChartLegendIcon({ variant, className }: ChartLegendIconProps) {
-  return (
-    <img
-      src={ICONS[variant]}
-      alt=""
-      aria-hidden="true"
-      className={className}
-      width={12}
-      height={12}
-    />
-  );
+  const Icon = ICONS[variant];
+
+  return <Icon className={className} />;
 }

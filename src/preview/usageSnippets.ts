@@ -1,11 +1,15 @@
+/**
+ * Copy-paste integration snippets for gallery "Integration code" panels.
+ * Keep in sync with HowToUsePage.tsx and catalog.ts when adding components.
+ */
 import type { StackedBarChartCounts } from "../components/StackedBarChart";
 
 const SHARED_REQUIREMENTS = [
   "React 18+",
   "CSS Modules (*.module.css)",
-  "SVG imports as URLs",
   "Inter font loaded globally",
   "Import src/tokens/global.css once in your app",
+  "No SVG asset pipeline — icons ship as React components in each component's icons/ folder",
 ];
 
 export const filterBarUsage = {
@@ -206,28 +210,47 @@ export function MyView() {
 // Optional label-row link — add linkText (and linkHref or onLinkClick) when needed.`,
 };
 
+export const textAreaFieldUsage = {
+  filesToCopy: "Copy src/components/TextAreaField/ into your project.",
+  requirements: SHARED_REQUIREMENTS,
+  code: "See Text Area Field gallery page for usage example.",
+};
+
 export const summaryPanelUsage = {
   filesToCopy:
-    "Copy src/components/SummaryPanel/, src/components/SingleSelect/, src/components/TextField/, src/components/MultiSelectMenu/, src/components/SelectMenu/, src/components/SegmentedControl/, src/components/Button/, and src/components/Checkbox/ into your project.",
+    "Copy src/components/SummaryPanel/, src/components/Radio/, src/components/TextAreaField/, src/components/SingleSelect/, src/components/TextField/, src/components/MultiSelectMenu/, src/components/SelectMenu/, src/components/SegmentedControl/, src/components/Button/, and src/components/Checkbox/ into your project.",
   requirements: SHARED_REQUIREMENTS,
   code: `import { SummaryPanel } from "@/components/SummaryPanel";
 
 export function MyView() {
   return (
     <SummaryPanel
+      validationType="list"
+      errorType="invalid-value"
       invalidValue="xyz123"
       cellCount={12}
       holeCount={5}
+      valueOptions={column.valueOptions}
+      holeOptions={holeOptions}
       defaultCollapsed={false}
-      onClose={() => undefined}
+      onPanelStateChange={handlePanelStateChange}
+      onClose={handleClose}
     />
   );
-}`,
+}
+
+// validationType: "list" | "text" | "boolean" | "date"
+// errorType: list/boolean/date → "invalid-value" | "missing-value"
+//            text → "exceeded-character-limit" | "value-required"
+// boolean: pass booleanValueOptions (dynamic labels/values)
+// date: pass dateFormat from column schema (e.g. "yyyy/mm/dd"); panel validates input
+// text: pass characterLimit, exceededLimitCellText, enteredCharacterCount
+// layout: fillHeight for table sidebars, or panelHeight (default 640)`,
 };
 
 export const dataTableUsage = {
   filesToCopy:
-    "Copy src/components/DataTable/, src/components/SummaryPanel/, src/components/FilterBar/icons/, src/components/SingleSelect/, src/components/TextField/, src/components/MultiSelectMenu/, src/components/SelectMenu/, src/components/SegmentedControl/, src/components/Button/, and src/components/Checkbox/ into your project.",
+    "Copy src/components/DataTable/, src/components/SummaryPanel/, src/components/FilterBar/icons/, src/components/Radio/, src/components/SingleSelect/, src/components/TextField/, src/components/TextAreaField/, src/components/MultiSelectMenu/, src/components/SelectMenu/, src/components/SegmentedControl/, src/components/Button/, and src/components/Checkbox/ into your project.",
   requirements: SHARED_REQUIREMENTS,
   code: `import { DataTableWithSummary } from "@/components/DataTable";
 
@@ -237,7 +260,11 @@ export function MyView() {
       <DataTableWithSummary />
     </div>
   );
-}`,
+}
+
+// Gallery demo uses list validation only. In your app, pass validationType,
+// errorType, and type-specific SummaryPanel props per column when wiring
+// DataTable + SummaryPanel yourself.`,
 };
 
 export function getStackedBarChartUsage(counts: StackedBarChartCounts) {

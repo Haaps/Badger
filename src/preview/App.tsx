@@ -1,15 +1,21 @@
 import { Navigate, Route, Routes } from "react-router-dom";
-import { componentCatalog } from "./catalog";
+import { getRoutableEntries } from "./catalog";
 import { PreviewLayout } from "./PreviewLayout";
 
+const routableEntries = getRoutableEntries();
+
 export function PreviewApp() {
-  const defaultPath = componentCatalog[0]?.path ?? "";
+  const defaultPath = routableEntries[0]?.path ?? "";
 
   return (
     <Routes>
       <Route element={<PreviewLayout />}>
         <Route index element={<Navigate to={defaultPath} replace />} />
-        {componentCatalog.map(({ path, Page }) => (
+        <Route
+          path="summary-panel"
+          element={<Navigate to="summary-panel/list-validation" replace />}
+        />
+        {routableEntries.map(({ path, Page }) => (
           <Route key={path} path={path} element={<Page />} />
         ))}
       </Route>

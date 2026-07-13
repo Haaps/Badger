@@ -1,3 +1,10 @@
+/**
+ * DataTable renders validation-status cells; DataTableWithSummary is a gallery
+ * composition that wires row state to SummaryPanel (list validation demo only).
+ *
+ * Cells with a `status` are selectable; selecting one opens the panel and syncs
+ * stage/approve actions back onto matching rows (single cell or drill-hole scope).
+ */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StatusIcon } from "../FilterBar/icons/StatusIcon";
 import type { StatusFilter } from "../FilterBar";
@@ -70,6 +77,7 @@ function getMatchingErrorValue(cell: DataTableCellValue) {
 
 type ApplyAction = "stage" | "update-staged" | "approve" | "revert";
 
+/** Maps SummaryPanel state transitions to which matching cells should update. */
 function getApplyAction(
   currentPanelState: SummaryPanelState,
   nextState: SummaryPanelState,
@@ -86,6 +94,7 @@ function getPreviewApplyAction(panelState: SummaryPanelState): ApplyAction {
   return "approve";
 }
 
+/** Bulk apply only touches cells in the status expected for this action (e.g. stage → errors only). */
 function shouldUpdateCellForHolesScope(
   cell: DataTableCellValue,
   selectedInvalidValue: string,
@@ -266,6 +275,7 @@ function applyPanelChangeToRows(
   const updates = buildCellUpdates(state, stagedValue, applyScope, selectedHoles);
   const columnId = selectedCell.columnId;
 
+  // Hole scope: update every matching cell in selected drill holes for this column.
   if (scope === "holes") {
     const holes = new Set(selectedHoles ?? []);
 
@@ -491,6 +501,7 @@ export function DataTableWithSummary({
   const [selectedCell, setSelectedCell] = useState<SelectedTableCell | null>(null);
   const [panelCollapsed, setPanelCollapsed] = useState(true);
   const tableScrollRef = useRef<HTMLDivElement | null>(null);
+  // Ref keeps handlePanelStateChange stable while always reading latest selection.
   const selectedCellRef = useRef<SelectedTableCell | null>(null);
   selectedCellRef.current = selectedCell;
 
@@ -592,6 +603,7 @@ export function DataTableWithSummary({
     return isAvailable ? [holeNumber] : undefined;
   }, [rows, selectedCell, holeOptions]);
 
+  // Remount SummaryPanel when the selected cell changes so workflow state resets cleanly.
   const panelKey = useMemo(() => {
     if (!selectedCell) return "summary-panel-empty";
     return `${selectedCell.rowId}:${selectedCell.columnId}`;

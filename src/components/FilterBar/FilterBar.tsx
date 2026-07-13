@@ -19,6 +19,7 @@ function isSelected(
   return value.mode === "specific" && value.filters.includes(filter);
 }
 
+/** Non-selected chips appear muted while another filter mode is active. */
 function isDeactivated(value: FilterBarValue, filter: StatusFilter | "all") {
   if (filter === "all") return value.mode === "specific";
   return value.mode === "all";
@@ -36,6 +37,7 @@ export function FilterBar({
 
   const toggleStatus = useCallback(
     (filter: StatusFilter) => {
+      // From "all", picking one chip narrows to that status only.
       if (value.mode === "all") {
         onChange({ mode: "specific", filters: [filter] });
         return;
@@ -45,6 +47,7 @@ export function FilterBar({
         ? value.filters.filter((f) => f !== filter)
         : [...value.filters, filter];
 
+      // Deselecting the last chip returns to "all".
       if (next.length === 0) {
         onChange({ mode: "all" });
         return;

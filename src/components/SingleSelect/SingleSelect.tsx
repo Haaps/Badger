@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { SelectMenuPanel } from "../SelectMenu";
 import type { SingleSelectProps } from "./SingleSelect.types";
-import chevronIcon from "./assets/chevron-down.svg";
+import { ChevronDownIcon } from "./icons";
 import styles from "./SingleSelect.module.css";
 
 export function SingleSelect({
@@ -130,7 +130,7 @@ export function SingleSelect({
           }}
         >
           <span className={valueClassNames}>{displayLabel}</span>
-          <img src={chevronIcon} alt="" className={chevronClassNames} aria-hidden="true" />
+          <ChevronDownIcon className={chevronClassNames} />
         </button>
 
         {open && !disabled && (
