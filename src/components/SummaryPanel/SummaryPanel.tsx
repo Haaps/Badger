@@ -1,25 +1,67 @@
-import { useMemo, useState } from "react";
+/**
+ * Summary Panel — corrects column validation errors through a three-state workflow:
+ * editable (pick a fix) → staged (pending review) → approved (committed).
+ *
+ * `validationType` + `errorType` select copy and input UI (list select, text area,
+ * boolean radios, date field, or character-limit resolution). Apply scope controls whether the
+ * fix targets one cell or matching errors across selected drill holes.
+ *
+ * Omitted props fall back to demo constants from SummaryPanel.demoData so the gallery
+ * works without wiring; production apps should pass real counts, values, and options.
+ */
+import { useMemo, useRef, useState, type CSSProperties } from "react";
 import { Button } from "../Button";
 import { MultiSelectMenu } from "../MultiSelectMenu";
+import { Radio } from "../Radio";
 import { SegmentedControl } from "../SegmentedControl";
 import { SingleSelect } from "../SingleSelect";
+import { TextAreaField } from "../TextAreaField";
 import { TextField } from "../TextField";
-import closeIcon from "./assets/close.svg";
-import sidebarChevronIcon from "./assets/sidebar-chevron.svg";
+import { CloseIcon, SidebarChevronIcon } from "./icons";
 import {
+  getDateFormatErrorMessage,
+  isValidDateForFormat,
+} from "./dateFormatValidation";
+import {
+  DEMO_BOOLEAN_CELL_COUNT,
+  DEMO_BOOLEAN_HOLE_COUNT,
+  DEMO_BOOLEAN_INITIAL_STAGED_VALUE,
+  DEMO_BOOLEAN_INVALID_VALUE,
+  DEMO_BOOLEAN_VALUE_OPTIONS,
+  DEMO_DATE_CELL_COUNT,
+  DEMO_DATE_FORMAT,
+  DEMO_DATE_HOLE_COUNT,
+  DEMO_DATE_INITIAL_STAGED_VALUE,
+  DEMO_DATE_INVALID_VALUE,
   DEMO_CELL_COUNT,
+  DEMO_CHARACTER_LIMIT,
   DEMO_DEFAULT_SELECTED_HOLES,
+  DEMO_ENTERED_CHARACTER_COUNT,
   DEMO_HOLE_COUNT,
   DEMO_HOLE_OPTIONS,
   DEMO_INVALID_VALUE,
+  DEMO_MAX_ENTERED_CHARACTER_COUNT_IN_SELECTION,
+  DEMO_MISSING_CELL_COUNT,
+  DEMO_MISSING_HOLE_COUNT,
+  DEMO_TEXT_CELL_COUNT,
+  DEMO_TEXT_HOLE_COUNT,
+  DEMO_TEXT_INITIAL_STAGED_VALUE,
+  DEMO_TEXT_INVALID_VALUE,
   DEMO_VALUE_OPTIONS,
+  createGeologicalSummaryText,
 } from "./SummaryPanel.demoData";
 import type { SelectMenuOption } from "../SelectMenu";
 import type {
+  BooleanValueOption,
+  CharacterLimitResolution,
+  ListSummaryErrorType,
   SummaryApplyImpact,
   SummaryApplyScope,
+  SummaryErrorType,
   SummaryPanelProps,
   SummaryPanelState,
+  SummaryValidationType,
+  TextSummaryErrorType,
 } from "./SummaryPanel.types";
 import styles from "./SummaryPanel.module.css";
 
@@ -27,6 +69,333 @@ const APPLY_SCOPE_OPTIONS = [
   { value: "cell", label: "This cell only" },
   { value: "holes", label: "Apply to drill holes" },
 ] as const;
+
+const CHARACTER_LIMIT_RESOLUTION_OPTIONS = [
+  { value: "trim-to-limit", label: "Trim to existing character limit" },
+  { value: "increase-limit", label: "Increase character limit manually" },
+] as const satisfies ReadonlyArray<{
+  value: CharacterLimitResolution;
+  label: string;
+}>;
+
+type PanelCopy = {
+  editableTitle: string;
+  helperText?: string;
+};
+
+const LIST_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
+  "invalid-value": {
+    editableTitle: "Invalid list value",
+    helperText: "Choose or create a valid value to replace it.",
+  },
+  "missing-value": {
+    editableTitle: "Value required",
+    helperText: "Choose or create a valid value.",
+  },
+};
+
+const TEXT_ERROR_COPY: Record<TextSummaryErrorType, PanelCopy> = {
+  "exceeded-character-limit": {
+    editableTitle: "",
+  },
+  "value-required": {
+    editableTitle: "Value required",
+  },
+};
+
+const BOOLEAN_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
+  "invalid-value": {
+    editableTitle: "Invalid Boolean Value",
+  },
+  "missing-value": {
+    editableTitle: "Value required",
+  },
+};
+
+const DATE_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
+  "invalid-value": {
+    editableTitle: "Invalid Date Value",
+    helperText: "Enter a valid date to replace it.",
+  },
+  "missing-value": {
+    editableTitle: "Value required",
+    helperText: "Enter a date.",
+  },
+};
+
+function isBooleanValidation(validationType: SummaryValidationType) {
+  return validationType === "boolean";
+}
+
+function getPanelCopy(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+): PanelCopy {
+  if (validationType === "boolean") {
+    return BOOLEAN_ERROR_COPY[errorType as ListSummaryErrorType];
+  }
+
+  if (validationType === "date") {
+    return DATE_ERROR_COPY[errorType as ListSummaryErrorType];
+  }
+
+  if (validationType === "list") {
+    return LIST_ERROR_COPY[errorType as ListSummaryErrorType];
+  }
+
+  return TEXT_ERROR_COPY[errorType as TextSummaryErrorType];
+}
+
+function isValueRequiredError(errorType: SummaryErrorType) {
+  return errorType === "missing-value" || errorType === "value-required";
+}
+
+function isTextValueRequiredError(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+) {
+  return validationType === "text" && errorType === "value-required";
+}
+
+function isExceededCharacterLimitError(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+) {
+  return validationType === "text" && errorType === "exceeded-character-limit";
+}
+
+// Character-limit fixes encode resolution in the staged value string passed to
+// onPanelStateChange: "trim-to-limit" or "increase-limit:{digits}".
+function getExceededLimitStagedValue(
+  resolution: CharacterLimitResolution,
+  newLimit: string,
+) {
+  if (resolution === "trim-to-limit") {
+    return "trim-to-limit";
+  }
+
+  return `increase-limit:${newLimit.trim()}`;
+}
+
+function parseExceededLimitStagedValue(value: string): {
+  resolution: CharacterLimitResolution;
+  newLimit: string;
+} {
+  if (value.startsWith("increase-limit:")) {
+    return {
+      resolution: "increase-limit",
+      newLimit: value.slice("increase-limit:".length),
+    };
+  }
+
+  return {
+    resolution: value as CharacterLimitResolution,
+    newLimit: "",
+  };
+}
+
+function getOriginalExceededLimitCellText(
+  exceededLimitCellText: string | undefined,
+  enteredCharacterCount: number,
+) {
+  const declaredCount =
+    enteredCharacterCount > 0 ? enteredCharacterCount : DEMO_ENTERED_CHARACTER_COUNT;
+
+  if (
+    exceededLimitCellText &&
+    exceededLimitCellText.length === declaredCount
+  ) {
+    return exceededLimitCellText;
+  }
+
+  return createGeologicalSummaryText(declaredCount);
+}
+
+function getExceededLimitCommittedDisplayText(
+  stagedValue: string,
+  columnLimit: number,
+  originalText: string,
+) {
+  return getExceededLimitResultText(stagedValue, columnLimit, originalText);
+}
+
+function getExceededLimitPreviewDisplayText(
+  resolution: CharacterLimitResolution,
+  newLimit: string,
+  columnLimit: number,
+  originalText: string,
+  committedStagedValue: string,
+) {
+  if (
+    resolution === "increase-limit" &&
+    parseNewCharacterLimitValue(newLimit) === null
+  ) {
+    return getExceededLimitCommittedDisplayText(
+      committedStagedValue,
+      columnLimit,
+      originalText,
+    );
+  }
+
+  return getExceededLimitResultFromResolution(
+    resolution,
+    newLimit,
+    columnLimit,
+    originalText,
+  );
+}
+
+function getExceededLimitStagedAsDisplayText(
+  isApproved: boolean,
+  isStaged: boolean,
+  hasStagedChanges: boolean,
+  stagedValue: string,
+  resolution: CharacterLimitResolution,
+  newLimit: string,
+  columnLimit: number,
+  originalText: string,
+) {
+  if (isApproved || (isStaged && !hasStagedChanges)) {
+    return getExceededLimitCommittedDisplayText(stagedValue, columnLimit, originalText);
+  }
+
+  if (isStaged) {
+    return getExceededLimitPreviewDisplayText(
+      resolution,
+      newLimit,
+      columnLimit,
+      originalText,
+      stagedValue,
+    );
+  }
+
+  return "";
+}
+
+function getExceededLimitResultFromResolution(
+  resolution: CharacterLimitResolution,
+  newLimit: string,
+  columnLimit: number,
+  originalText: string,
+) {
+  const originalLength = originalText.length;
+
+  if (resolution === "trim-to-limit") {
+    if (columnLimit >= originalLength) {
+      return originalText;
+    }
+
+    return originalText.slice(0, columnLimit);
+  }
+
+  const parsedLimit = parseNewCharacterLimitValue(newLimit);
+  if (parsedLimit === null) {
+    return originalText;
+  }
+
+  if (parsedLimit >= originalLength) {
+    return originalText;
+  }
+
+  return originalText.slice(0, parsedLimit);
+}
+
+function getExceededLimitResultText(
+  resolutionValue: string,
+  columnLimit: number,
+  originalText: string,
+) {
+  const { resolution, newLimit } = parseExceededLimitStagedValue(resolutionValue);
+
+  return getExceededLimitResultFromResolution(
+    resolution,
+    newLimit,
+    columnLimit,
+    originalText,
+  );
+}
+
+function syncExceededLimitResolutionState(
+  resolutionValue: string,
+  setResolution: (resolution: CharacterLimitResolution) => void,
+  setNewLimit: (newLimit: string) => void,
+) {
+  const parsed = parseExceededLimitStagedValue(resolutionValue);
+  setResolution(parsed.resolution);
+  setNewLimit(parsed.newLimit);
+}
+
+function canCommitExceededLimitResolution(
+  resolution: CharacterLimitResolution,
+  newLimit: string,
+) {
+  if (resolution === "trim-to-limit") {
+    return true;
+  }
+
+  return newLimit.trim() !== "";
+}
+
+function parseNewCharacterLimitValue(newLimit: string) {
+  const parsedLimit = Number.parseInt(newLimit.trim(), 10);
+  return Number.isFinite(parsedLimit) && parsedLimit > 0 ? parsedLimit : null;
+}
+
+function resolveMaxEnteredCharacterCountInSelection(
+  selectedHoles: string[],
+  maxEnteredCharacterCountInSelection: number | undefined,
+  getMaxEnteredCharacterCountInSelection:
+    | ((selectedHoles: string[]) => number | null)
+    | undefined,
+) {
+  const resolvedMax =
+    getMaxEnteredCharacterCountInSelection?.(selectedHoles) ??
+    maxEnteredCharacterCountInSelection ??
+    DEMO_MAX_ENTERED_CHARACTER_COUNT_IN_SELECTION;
+
+  return resolvedMax > 0 ? resolvedMax : null;
+}
+
+function shouldShowCharacterLimitTrimWarning(
+  applyScope: SummaryApplyScope,
+  resolution: CharacterLimitResolution,
+  newLimit: string,
+  selectedHoles: string[],
+  maxEnteredCharacterCountInSelection: number | undefined,
+  getMaxEnteredCharacterCountInSelection:
+    | ((selectedHoles: string[]) => number | null)
+    | undefined,
+) {
+  if (applyScope !== "holes" || resolution !== "increase-limit") {
+    return false;
+  }
+
+  const parsedLimit = parseNewCharacterLimitValue(newLimit);
+  if (parsedLimit === null) {
+    return false;
+  }
+
+  const maxInSelection = resolveMaxEnteredCharacterCountInSelection(
+    selectedHoles,
+    maxEnteredCharacterCountInSelection,
+    getMaxEnteredCharacterCountInSelection,
+  );
+
+  if (maxInSelection === null) {
+    return false;
+  }
+
+  return parsedLimit < maxInSelection;
+}
+
+function getCharacterLimitTrimWarningMessage(newLimit: string) {
+  const parsedLimit = parseNewCharacterLimitValue(newLimit);
+  if (parsedLimit === null) {
+    return "";
+  }
+
+  return `Some cells content still exceed ${parsedLimit} characters and will be trimmed automatically when this change is staged.`;
+}
 
 type ValueInputMode = "select" | "custom";
 
@@ -70,6 +439,30 @@ function formatCountLabel(count: number, singular: string, plural: string) {
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+function getDefaultApplyImpact(
+  applyScope: SummaryApplyScope,
+  selectedHoles: string[],
+  cellCount: number,
+  holeCount: number,
+): SummaryApplyImpact {
+  if (applyScope === "cell") {
+    return { rowCount: 1, holeCount: 0 };
+  }
+
+  const selectedHoleCount = selectedHoles.length;
+  if (selectedHoleCount === 0) {
+    return { rowCount: 0, holeCount: 0 };
+  }
+
+  const rowsPerHole = holeCount > 0 ? cellCount / holeCount : cellCount;
+  const rowCount = Math.max(1, Math.round(rowsPerHole * selectedHoleCount));
+
+  return {
+    rowCount,
+    holeCount: selectedHoleCount,
+  };
+}
+
 function getFooterNote(
   applyScope: SummaryApplyScope,
   panelState: SummaryPanelState,
@@ -86,15 +479,82 @@ function getFooterNote(
   return `Change will affect ${formatCountLabel(applyImpact.rowCount, "row", "rows")} across ${formatCountLabel(applyImpact.holeCount, "hole", "holes")}.`;
 }
 
-function getTitle(panelState: SummaryPanelState) {
+function getTitle(
+  panelState: SummaryPanelState,
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+  characterLimit: number,
+  enteredCharacterCount: number,
+) {
   switch (panelState) {
     case "staged":
       return "Staged update";
     case "approved":
       return "Approved update";
     default:
-      return "Invalid list value";
+      if (isExceededCharacterLimitError(validationType, errorType)) {
+        return `${characterLimit} character limit: ${enteredCharacterCount} entered`;
+      }
+      return getPanelCopy(validationType, errorType).editableTitle;
   }
+}
+
+function getSummaryMessage(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+  invalidValue: string,
+  cellCount: number,
+  holeCount: number,
+) {
+  if (validationType === "boolean") {
+    if (errorType === "missing-value") {
+      return `${formatCountLabel(cellCount, "cell", "cells")} are missing values across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+    }
+
+    return `\u201C${invalidValue}\u201D appears in ${formatCountLabel(cellCount, "cell", "cells")} across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+  }
+
+  if (validationType === "date") {
+    if (errorType === "missing-value") {
+      return `${formatCountLabel(cellCount, "cell", "cells")} are missing values across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+    }
+
+    return `\u201C${invalidValue}\u201D appears in ${formatCountLabel(cellCount, "cell", "cells")} across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+  }
+
+  if (errorType === "missing-value") {
+    return "This column requires values in all fields.";
+  }
+
+  if (errorType === "value-required") {
+    return `${formatCountLabel(cellCount, "cell", "cells")} in this column are missing values across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+  }
+
+  if (isExceededCharacterLimitError(validationType, errorType)) {
+    return `${formatCountLabel(cellCount, "cell", "cells")} in this column exceed the character limit across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+  }
+
+  return `\u201C${invalidValue}\u201D appears in ${formatCountLabel(cellCount, "cell", "cells")} across ${formatCountLabel(holeCount, "hole", "holes")}.`;
+}
+
+function getPreviousValueLabel(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+  invalidValue: string,
+) {
+  if (errorType === "missing-value") {
+    return validationType === "list" ||
+      validationType === "boolean" ||
+      validationType === "date"
+      ? "(no value)"
+      : "";
+  }
+
+  if (errorType === "value-required") {
+    return "";
+  }
+
+  return invalidValue;
 }
 
 function resolveDisplayValue(value: string, options: SelectMenuOption[]) {
@@ -106,22 +566,30 @@ function resolveDisplayValue(value: string, options: SelectMenuOption[]) {
   return value;
 }
 
+function resolveBooleanDisplayValue(value: string, options: BooleanValueOption[]) {
+  if (!value) return "";
+  const option = options.find((item) => item.value === value);
+  return option?.label ?? value;
+}
+
 type StatusDetailsBannerProps = {
   variant: "staged" | "approved";
   expanded: boolean;
   onToggle: () => void;
-  currentHeading: string;
-  currentValue: string;
-  previousValue: string;
+  stagedAsHeading: string;
+  stagedAsText: string;
+  previouslyText: string;
+  quoteValues?: boolean;
 };
 
 function StatusDetailsBanner({
   variant,
   expanded,
   onToggle,
-  currentHeading,
-  currentValue,
-  previousValue,
+  stagedAsHeading,
+  stagedAsText,
+  previouslyText,
+  quoteValues = true,
 }: StatusDetailsBannerProps) {
   const isStaged = variant === "staged";
   const bannerClassName = isStaged
@@ -148,12 +616,16 @@ function StatusDetailsBanner({
         {expanded && (
           <div className={styles.statusDetails}>
             <div>
-              <p className={styles.statusDetailsHeading}>{currentHeading}</p>
-              <p className={styles.statusDetailsValue}>&ldquo;{currentValue}&rdquo;</p>
+              <p className={styles.statusDetailsHeading}>{stagedAsHeading}</p>
+              <p className={styles.statusDetailsValue}>
+                {quoteValues ? `\u201C${stagedAsText}\u201D` : stagedAsText}
+              </p>
             </div>
             <div>
               <p className={styles.statusDetailsHeading}>PREVIOUSLY</p>
-              <p className={styles.statusDetailsValue}>&ldquo;{previousValue}&rdquo;</p>
+              <p className={styles.statusDetailsValue}>
+                {quoteValues ? `\u201C${previouslyText}\u201D` : previouslyText}
+              </p>
             </div>
           </div>
         )}
@@ -163,15 +635,26 @@ function StatusDetailsBanner({
 }
 
 export function SummaryPanel({
-  invalidValue = DEMO_INVALID_VALUE,
-  cellCount = DEMO_CELL_COUNT,
-  holeCount = DEMO_HOLE_COUNT,
+  validationType = "list",
+  errorType = "invalid-value",
+  invalidValue: invalidValueProp,
+  cellCount: cellCountProp,
+  holeCount: holeCountProp,
+  characterLimit: characterLimitProp,
+  enteredCharacterCount: enteredCharacterCountProp,
+  exceededLimitCellText: exceededLimitCellTextProp,
+  maxEnteredCharacterCountInSelection: maxEnteredCharacterCountInSelectionProp,
+  getMaxEnteredCharacterCountInSelection,
+  defaultCharacterLimitResolution = "trim-to-limit",
+  defaultNewCharacterLimit = "",
   valueOptions = DEMO_VALUE_OPTIONS,
+  booleanValueOptions = DEMO_BOOLEAN_VALUE_OPTIONS,
+  dateFormat: dateFormatProp,
   holeOptions = DEMO_HOLE_OPTIONS,
   defaultSelectedHoles = DEMO_DEFAULT_SELECTED_HOLES,
   defaultApplyScope = "cell",
   defaultPanelState = "editable",
-  initialStagedValue = "bnd",
+  initialStagedValue: initialStagedValueProp,
   collapsed: collapsedProp,
   defaultCollapsed = true,
   onCollapsedChange,
@@ -180,7 +663,62 @@ export function SummaryPanel({
   onPanelStateChange,
   getApplyImpact,
   className,
+  panelHeight = 640,
 }: SummaryPanelProps) {
+  // Demo fallbacks — see module comment; omit these props only in the gallery.
+  const invalidValue =
+    invalidValueProp ??
+    (validationType === "text"
+      ? DEMO_TEXT_INVALID_VALUE
+      : validationType === "boolean"
+        ? DEMO_BOOLEAN_INVALID_VALUE
+        : validationType === "date"
+          ? DEMO_DATE_INVALID_VALUE
+          : DEMO_INVALID_VALUE);
+  const dateFormat = dateFormatProp ?? DEMO_DATE_FORMAT;
+  const characterLimit = characterLimitProp ?? DEMO_CHARACTER_LIMIT;
+  const enteredCharacterCount = enteredCharacterCountProp ?? DEMO_ENTERED_CHARACTER_COUNT;
+  const originalExceededLimitTextRef = useRef(
+    getOriginalExceededLimitCellText(
+      exceededLimitCellTextProp,
+      enteredCharacterCountProp ?? DEMO_ENTERED_CHARACTER_COUNT,
+    ),
+  );
+  const originalExceededLimitText = originalExceededLimitTextRef.current;
+  const cellCount =
+    cellCountProp ??
+    (isValueRequiredError(errorType)
+      ? DEMO_MISSING_CELL_COUNT
+      : validationType === "text"
+        ? DEMO_TEXT_CELL_COUNT
+        : validationType === "boolean"
+          ? DEMO_BOOLEAN_CELL_COUNT
+          : validationType === "date"
+            ? DEMO_DATE_CELL_COUNT
+            : DEMO_CELL_COUNT);
+  const holeCount =
+    holeCountProp ??
+    (isValueRequiredError(errorType)
+      ? DEMO_MISSING_HOLE_COUNT
+      : validationType === "text"
+        ? DEMO_TEXT_HOLE_COUNT
+        : validationType === "boolean"
+          ? DEMO_BOOLEAN_HOLE_COUNT
+          : validationType === "date"
+            ? DEMO_DATE_HOLE_COUNT
+            : DEMO_HOLE_COUNT);
+  const defaultBooleanValue = booleanValueOptions[0]?.value ?? "";
+  const initialStagedValue =
+    initialStagedValueProp ??
+    (validationType === "text"
+      ? isExceededCharacterLimitError(validationType, errorType)
+        ? defaultCharacterLimitResolution
+        : DEMO_TEXT_INITIAL_STAGED_VALUE
+      : validationType === "boolean"
+        ? DEMO_BOOLEAN_INITIAL_STAGED_VALUE
+        : validationType === "date"
+          ? DEMO_DATE_INITIAL_STAGED_VALUE
+          : "bnd");
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const isCollapsedControlled = collapsedProp !== undefined;
   const collapsed = isCollapsedControlled ? collapsedProp : internalCollapsed;
@@ -192,12 +730,20 @@ export function SummaryPanel({
     onCollapsedChange?.(nextCollapsed);
   };
 
+  // When opening in staged/approved, seed inputs from initialStagedValue instead of empty.
   const opensInCommittedState =
     defaultPanelState === "staged" || defaultPanelState === "approved";
 
   const [panelState, setPanelState] = useState<SummaryPanelState>(defaultPanelState);
   const [valueInputMode, setValueInputMode] = useState<ValueInputMode>("select");
   const [selectedValue, setSelectedValue] = useState(
+    opensInCommittedState
+      ? initialStagedValue
+      : validationType === "boolean"
+        ? defaultBooleanValue
+        : "",
+  );
+  const [textValue, setTextValue] = useState(
     opensInCommittedState ? initialStagedValue : "",
   );
   const [customValue, setCustomValue] = useState("");
@@ -209,26 +755,104 @@ export function SummaryPanel({
   const [selectedHoles, setSelectedHoles] = useState<string[]>(defaultSelectedHoles);
   const [stagedDetailsExpanded, setStagedDetailsExpanded] = useState(false);
   const [approvedDetailsExpanded, setApprovedDetailsExpanded] = useState(false);
+  const initialExceededLimitState = isExceededCharacterLimitError(validationType, errorType)
+    ? parseExceededLimitStagedValue(
+        opensInCommittedState ? initialStagedValue : defaultCharacterLimitResolution,
+      )
+    : null;
+  const [characterLimitResolution, setCharacterLimitResolution] =
+    useState<CharacterLimitResolution>(
+      initialExceededLimitState?.resolution ?? defaultCharacterLimitResolution,
+    );
+  const [newCharacterLimit, setNewCharacterLimit] = useState(
+    initialExceededLimitState?.newLimit ?? defaultNewCharacterLimit,
+  );
 
   const isApproved = panelState === "approved";
   const isStaged = panelState === "staged";
   const isEditable = panelState === "editable";
   const showHoleMenu = applyScope === "holes";
-  const isCustomValueMode = valueInputMode === "custom";
+  const isCustomValueMode =
+    validationType === "list" && valueInputMode === "custom";
+  const isTextValueRequired = isTextValueRequiredError(validationType, errorType);
+  const isExceededLimit = isExceededCharacterLimitError(validationType, errorType);
+  const isBoolean = isBooleanValidation(validationType);
+  const isDate = validationType === "date";
+  const panelCopy = getPanelCopy(validationType, errorType);
+  const previousValueLabel = getPreviousValueLabel(validationType, errorType, invalidValue);
 
-  const currentValue = isCustomValueMode ? customValue.trim() : selectedValue;
+  const trimmedDateValue = isDate ? textValue.trim() : "";
+  const showDateFormatError =
+    isDate &&
+    trimmedDateValue !== "" &&
+    !isValidDateForFormat(trimmedDateValue, dateFormat);
+  const isDateValueCommittable =
+    !isDate || (trimmedDateValue !== "" && isValidDateForFormat(trimmedDateValue, dateFormat));
 
-  const canStageChange = isEditable && currentValue !== "";
+  const currentValue = isExceededLimit
+    ? getExceededLimitStagedValue(characterLimitResolution, newCharacterLimit)
+    : validationType === "text" || validationType === "date"
+      ? textValue.trim()
+      : isCustomValueMode
+        ? customValue.trim()
+        : selectedValue;
+
+  const canStageChange =
+    isEditable &&
+    (isExceededLimit
+      ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
+      : isDate
+        ? isDateValueCommittable
+        : currentValue !== "");
   const hasStagedChanges =
     currentValue !== stagedValue || applyScope !== stagedApplyScope;
-  const canUpdateStaged = isStaged && currentValue !== "" && hasStagedChanges;
+  const canUpdateStaged = isStaged && hasStagedChanges && (
+    isExceededLimit
+      ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
+      : isDate
+        ? isDateValueCommittable
+        : currentValue !== ""
+  );
 
-  const committedValueLabel = resolveDisplayValue(stagedValue, valueOptions);
+  const stagedAsText = isExceededLimit
+    ? getExceededLimitStagedAsDisplayText(
+        isApproved,
+        isStaged,
+        hasStagedChanges,
+        stagedValue,
+        characterLimitResolution,
+        newCharacterLimit,
+        characterLimit,
+        originalExceededLimitText,
+      )
+    : isBoolean
+      ? resolveBooleanDisplayValue(stagedValue, booleanValueOptions)
+      : validationType === "list"
+        ? resolveDisplayValue(stagedValue, valueOptions)
+        : stagedValue;
+
+  const previouslyText = isExceededLimit
+    ? originalExceededLimitText
+    : previousValueLabel;
 
   const applyImpact = useMemo(
-    () => getApplyImpact?.(applyScope, selectedHoles, panelState),
-    [getApplyImpact, applyScope, selectedHoles, panelState],
+    () =>
+      getApplyImpact?.(applyScope, selectedHoles, panelState) ??
+      getDefaultApplyImpact(applyScope, selectedHoles, cellCount, holeCount),
+    [getApplyImpact, applyScope, selectedHoles, panelState, cellCount, holeCount],
   );
+
+  const showCharacterLimitTrimWarning =
+    isExceededLimit &&
+    !isApproved &&
+    shouldShowCharacterLimitTrimWarning(
+      applyScope,
+      characterLimitResolution,
+      newCharacterLimit,
+      selectedHoles,
+      maxEnteredCharacterCountInSelectionProp,
+      getMaxEnteredCharacterCountInSelection,
+    );
 
   const segmentedOptions = useMemo(() => {
     if (!isApproved) {
@@ -269,6 +893,13 @@ export function SummaryPanel({
     if (!canStageChange) return;
     setStagedValue(currentValue);
     setStagedApplyScope(applyScope);
+    if (isExceededLimit) {
+      syncExceededLimitResolutionState(
+        currentValue,
+        setCharacterLimitResolution,
+        setNewCharacterLimit,
+      );
+    }
     setStagedDetailsExpanded(false);
     setPanelState("staged");
     onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
@@ -278,12 +909,26 @@ export function SummaryPanel({
     if (!canUpdateStaged) return;
     setStagedValue(currentValue);
     setStagedApplyScope(applyScope);
+    if (isExceededLimit) {
+      syncExceededLimitResolutionState(
+        currentValue,
+        setCharacterLimitResolution,
+        setNewCharacterLimit,
+      );
+    }
     onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
   };
 
   const handleApprove = () => {
     setStagedValue(currentValue);
     setStagedApplyScope(applyScope);
+    if (isExceededLimit) {
+      syncExceededLimitResolutionState(
+        currentValue,
+        setCharacterLimitResolution,
+        setNewCharacterLimit,
+      );
+    }
     setStagedDetailsExpanded(false);
     setApprovedDetailsExpanded(false);
     setPanelState("approved");
@@ -293,6 +938,13 @@ export function SummaryPanel({
   const handleRevertToStaged = () => {
     setApprovedDetailsExpanded(false);
     setPanelState("staged");
+    if (isExceededLimit) {
+      syncExceededLimitResolutionState(
+        stagedValue,
+        setCharacterLimitResolution,
+        setNewCharacterLimit,
+      );
+    }
     onPanelStateChange?.("staged", stagedValue, applyScope, selectedHoles);
   };
 
@@ -320,7 +972,138 @@ export function SummaryPanel({
     onClose?.();
   };
 
+  const renderResolutionSection = () => (
+    <div className={styles.resolutionSection}>
+      <p className={styles.resolutionLabel}>Select resolution</p>
+      <div
+        className={styles.resolutionOptions}
+        role="radiogroup"
+        aria-label="Select resolution"
+      >
+        {CHARACTER_LIMIT_RESOLUTION_OPTIONS.map((option) => (
+          <Radio
+            key={option.value}
+            name="character-limit-resolution"
+            className={styles.resolutionRadio}
+            checked={characterLimitResolution === option.value}
+            onCheckedChange={() => {
+              setCharacterLimitResolution(option.value);
+              if (option.value === "trim-to-limit") {
+                setNewCharacterLimit("");
+              }
+            }}
+            disabled={isApproved}
+            label={option.label}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderNewCharacterLimitField = () => (
+    <div className={styles.characterLimitInputSection}>
+      <TextField
+        className={styles.characterLimitField}
+        label="New Character Limit"
+        placeholder=""
+        value={newCharacterLimit}
+        onChange={(event) => setNewCharacterLimit(event.target.value)}
+        disabled={isApproved}
+        aria-label="New character limit"
+      />
+      {showCharacterLimitTrimWarning && (
+        <div className={styles.characterLimitWarning} role="alert">
+          <p className={styles.characterLimitWarningText}>
+            {getCharacterLimitTrimWarningMessage(newCharacterLimit)}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderBooleanValueField = () => (
+    <div className={styles.resolutionSection}>
+      <p className={styles.resolutionLabel}>Choose a value</p>
+      <div
+        className={[
+          styles.resolutionOptions,
+          isApproved && styles.booleanValueOptionsDisabled,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        role="radiogroup"
+        aria-label="Choose a value"
+      >
+        {booleanValueOptions.map((option) => (
+          <Radio
+            key={option.value}
+            name="boolean-value"
+            className={styles.resolutionRadio}
+            checked={selectedValue === option.value}
+            onCheckedChange={() => setSelectedValue(option.value)}
+            disabled={isApproved}
+            label={option.label}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
   const renderValueField = () => {
+    if (isExceededLimit) {
+      return null;
+    }
+
+    if (validationType === "text" && isTextValueRequired) {
+      return (
+        <TextAreaField
+          className={styles.valueField}
+          label="Enter Value"
+          placeholder=""
+          value={textValue}
+          onChange={(event) => setTextValue(event.target.value)}
+          maxLength={characterLimit}
+          disabled={isApproved}
+          aria-label="Enter value"
+        />
+      );
+    }
+
+    if (validationType === "date") {
+      return (
+        <TextField
+          className={styles.valueField}
+          label={
+            <>
+              Date{" "}
+              <span className={styles.dateFormatHint}>({dateFormat})</span>
+            </>
+          }
+          placeholder=""
+          value={textValue}
+          onChange={(event) => setTextValue(event.target.value)}
+          disabled={isApproved}
+          error={showDateFormatError}
+          errorMessage={getDateFormatErrorMessage(dateFormat)}
+          aria-label={`Date (${dateFormat})`}
+        />
+      );
+    }
+
+    if (validationType === "text") {
+      return (
+        <TextField
+          className={styles.valueField}
+          label="Corrected Value"
+          placeholder=""
+          value={textValue}
+          onChange={(event) => setTextValue(event.target.value)}
+          disabled={isApproved}
+          aria-label="Corrected value"
+        />
+      );
+    }
+
     if (isCustomValueMode) {
       return (
         <TextField
@@ -353,8 +1136,17 @@ export function SummaryPanel({
     );
   };
 
+  const panelStyle: CSSProperties | undefined =
+    !fillHeight && panelHeight !== 640
+      ? ({ "--summary-panel-height": `${panelHeight}px` } as CSSProperties)
+      : undefined;
+
   return (
-    <aside className={panelClassNames} aria-label="Summary panel">
+    <aside
+      className={panelClassNames}
+      style={panelStyle}
+      aria-label="Summary panel"
+    >
       <button
         type="button"
         className={styles.sidebar}
@@ -363,12 +1155,7 @@ export function SummaryPanel({
         onClick={() => setCollapsed(!collapsed)}
       >
         <div className={styles.sidebarInner}>
-          <img
-            src={sidebarChevronIcon}
-            alt=""
-            className={chevronClassNames}
-            aria-hidden="true"
-          />
+          <SidebarChevronIcon className={chevronClassNames} />
           <p className={styles.sidebarLabel}>SUMMARY</p>
         </div>
       </button>
@@ -377,39 +1164,54 @@ export function SummaryPanel({
         <div className={styles.content}>
           <div className={styles.body}>
             <div className={styles.bodyMain}>
-              <div className={styles.headerRow}>
-                <h2 className={titleClassNames}>{getTitle(panelState)}</h2>
-                <button
-                  type="button"
-                  className={styles.closeButton}
-                  aria-label="Close summary panel"
-                  onClick={handleClose}
-                >
-                  <img src={closeIcon} alt="" className={styles.closeIcon} aria-hidden="true" />
-                </button>
-              </div>
-
-              {isEditable && (
-                <div className={styles.messageBlock}>
-                  <p className={styles.summaryText}>
-                    &ldquo;{invalidValue}&rdquo; appears in{" "}
-                    {formatCountLabel(cellCount, "cell", "cells")} across{" "}
-                    {formatCountLabel(holeCount, "hole", "holes")}.
-                  </p>
-                  <p className={styles.helperText}>
-                    Choose or create a valid value to replace it.
-                  </p>
+              <div className={styles.introBlock}>
+                <div className={styles.headerRow}>
+                  <h2 className={titleClassNames}>
+                    {getTitle(
+                      panelState,
+                      validationType,
+                      errorType,
+                      characterLimit,
+                      enteredCharacterCount,
+                    )}
+                  </h2>
+                  <button
+                    type="button"
+                    className={styles.closeButton}
+                    aria-label="Close summary panel"
+                    onClick={handleClose}
+                  >
+                    <CloseIcon className={styles.closeIcon} />
+                  </button>
                 </div>
-              )}
+
+                {isEditable && (
+                  <>
+                    <p className={styles.summaryText}>
+                      {getSummaryMessage(
+                        validationType,
+                        errorType,
+                        invalidValue,
+                        cellCount,
+                        holeCount,
+                      )}
+                    </p>
+                    {panelCopy.helperText && (
+                      <p className={styles.helperText}>{panelCopy.helperText}</p>
+                    )}
+                  </>
+                )}
+              </div>
 
               {isStaged && (
                 <StatusDetailsBanner
                   variant="staged"
                   expanded={stagedDetailsExpanded}
                   onToggle={() => setStagedDetailsExpanded((current) => !current)}
-                  currentHeading="STAGED AS"
-                  currentValue={committedValueLabel}
-                  previousValue={invalidValue}
+                  stagedAsHeading="STAGED AS"
+                  stagedAsText={stagedAsText}
+                  previouslyText={previouslyText}
+                  quoteValues={!isBoolean}
                 />
               )}
 
@@ -418,13 +1220,23 @@ export function SummaryPanel({
                   variant="approved"
                   expanded={approvedDetailsExpanded}
                   onToggle={() => setApprovedDetailsExpanded((current) => !current)}
-                  currentHeading="APPROVED AS"
-                  currentValue={committedValueLabel}
-                  previousValue={invalidValue}
+                  stagedAsHeading="APPROVED AS"
+                  stagedAsText={stagedAsText}
+                  previouslyText={previouslyText}
+                  quoteValues={!isBoolean}
                 />
               )}
 
-              {renderValueField()}
+              {isExceededLimit ? (
+                <>
+                  {renderResolutionSection()}
+                  {characterLimitResolution === "increase-limit" && renderNewCharacterLimitField()}
+                </>
+              ) : isBoolean ? (
+                renderBooleanValueField()
+              ) : (
+                renderValueField()
+              )}
             </div>
 
             <div className={applySectionClassNames}>
@@ -521,15 +1333,44 @@ export function SummaryPanel({
 }
 
 export type {
+  BooleanSummaryErrorType,
+  BooleanValueOption,
+  CharacterLimitResolution,
+  DateSummaryErrorType,
+  ListSummaryErrorType,
   SummaryApplyScope,
+  SummaryErrorType,
   SummaryPanelProps,
   SummaryPanelState,
+  SummaryValidationType,
+  TextSummaryErrorType,
 } from "./SummaryPanel.types";
 export {
+  DEMO_BOOLEAN_CELL_COUNT,
+  DEMO_BOOLEAN_HOLE_COUNT,
+  DEMO_BOOLEAN_INITIAL_STAGED_VALUE,
+  DEMO_BOOLEAN_INVALID_VALUE,
+  DEMO_BOOLEAN_VALUE_OPTIONS,
+  DEMO_DATE_CELL_COUNT,
+  DEMO_DATE_FORMAT,
+  DEMO_DATE_HOLE_COUNT,
+  DEMO_DATE_INITIAL_STAGED_VALUE,
+  DEMO_DATE_INVALID_VALUE,
   DEMO_CELL_COUNT,
+  DEMO_CHARACTER_LIMIT,
   DEMO_DEFAULT_SELECTED_HOLES,
+  DEMO_ENTERED_CHARACTER_COUNT,
+  DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
   DEMO_HOLE_COUNT,
   DEMO_HOLE_OPTIONS,
   DEMO_INVALID_VALUE,
+  DEMO_MAX_ENTERED_CHARACTER_COUNT_IN_SELECTION,
+  DEMO_MISSING_CELL_COUNT,
+  DEMO_MISSING_HOLE_COUNT,
+  DEMO_TEXT_CELL_COUNT,
+  DEMO_TEXT_HOLE_COUNT,
+  DEMO_TEXT_INITIAL_STAGED_VALUE,
+  DEMO_TEXT_INVALID_VALUE,
   DEMO_VALUE_OPTIONS,
+  createGeologicalSummaryText,
 } from "./SummaryPanel.demoData";

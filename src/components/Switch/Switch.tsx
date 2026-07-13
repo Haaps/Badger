@@ -1,7 +1,6 @@
 import { useId, useState, type ChangeEvent } from "react";
 import type { SwitchProps } from "./Switch.types";
-import handleOnIcon from "./assets/handle-on.svg";
-import handleOnHoverIcon from "./assets/handle-on-hover.svg";
+import { HandleOnHoverIcon, HandleOnIcon } from "./icons";
 import styles from "./Switch.module.css";
 
 export function Switch({
@@ -33,8 +32,8 @@ export function Switch({
     .filter(Boolean)
     .join(" ");
 
-  const handleOnIconSrc =
-    hovered && !disabled ? handleOnHoverIcon : handleOnIcon;
+  const HandleIcon =
+    hovered && !disabled ? HandleOnHoverIcon : HandleOnIcon;
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     onCheckedChange?.(event.target.checked);
@@ -60,7 +59,7 @@ export function Switch({
       <span className={trackClassNames} aria-hidden="true">
         <span className={handleClassNames}>
           {checked && (
-            <img src={handleOnIconSrc} alt="" className={styles.handleIcon} />
+            <HandleIcon className={styles.handleIcon} />
           )}
         </span>
       </span>

@@ -26,15 +26,13 @@ function StaticRadio({
   hovered,
   label,
 }: (typeof STATES)[number]) {
+  const Icon = getRadioIcon(checked, disabled, hovered);
+
   return (
     <span className={radioStyles.root}>
       <span className={radioStyles.control}>
         <span className={radioStyles.visual} aria-hidden="true">
-          <img
-            src={getRadioIcon(checked, disabled, hovered)}
-            alt=""
-            className={radioStyles.icon}
-          />
+          <Icon className={radioStyles.icon} />
         </span>
       </span>
       <span className={radioStyles.label}>{label}</span>

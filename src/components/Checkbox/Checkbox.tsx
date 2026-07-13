@@ -1,7 +1,6 @@
 import { useEffect, useId, useRef, type ChangeEvent } from "react";
 import type { CheckboxProps } from "./Checkbox.types";
-import checkIcon from "./assets/check.svg";
-import indeterminateIcon from "./assets/indeterminate.svg";
+import { CheckIcon, IndeterminateIcon } from "./icons";
 import styles from "./Checkbox.module.css";
 
 export function Checkbox({
@@ -53,14 +52,10 @@ export function Checkbox({
       <span className={boxClassNames} aria-hidden="true">
         <span className={styles.iconLayer}>
           {checked && !indeterminate && (
-            <img src={checkIcon} alt="" className={styles.checkIcon} />
+            <CheckIcon className={styles.checkIcon} />
           )}
           {indeterminate && (
-            <img
-              src={indeterminateIcon}
-              alt=""
-              className={styles.indeterminateIcon}
-            />
+            <IndeterminateIcon className={styles.indeterminateIcon} />
           )}
         </span>
       </span>

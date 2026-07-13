@@ -31,21 +31,36 @@
 
 .interactive {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
 }
 
 .demoColumn {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 0;
   width: 100%;
   max-width: 420px;
 }
 
+.demoControls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  width: 100%;
+  margin-bottom: 36px;
+}
+
+.interactiveHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
 .sectionLabel {
-  margin: 0 0 16px;
-  align-self: flex-start;
+  margin: 0;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -53,11 +68,8 @@
   color: #888888;
 }
 
-.controls {
-  display: flex;
-  justify-content: flex-end;
+.errorTypeControl {
   width: 100%;
-  margin-bottom: 16px;
 }
 
 .hint {

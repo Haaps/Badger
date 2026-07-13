@@ -1,7 +1,9 @@
 import type { SummaryPanelState, SummaryApplyScope } from "../SummaryPanel";
 
+/** Validation lifecycle mirrored on table cells and synced with SummaryPanel. */
 export type TableCellStatus = "error" | "staged" | "approved";
 
+/** Rich cell payload for validation columns; plain strings render as read-only text. */
 export type DataTableCellValue = {
   value: string;
   status?: TableCellStatus;

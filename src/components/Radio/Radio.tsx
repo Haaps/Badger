@@ -16,7 +16,7 @@ export function Radio({
   const inputId = id ?? generatedId;
   const [hovered, setHovered] = useState(false);
 
-  const iconSrc = getRadioIcon(checked, disabled, hovered && !disabled);
+  const Icon = getRadioIcon(checked, disabled, hovered && !disabled);
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
     if (event.target.checked) {
@@ -38,7 +38,7 @@ export function Radio({
         onMouseLeave={() => setHovered(false)}
       />
       <span className={styles.visual} aria-hidden="true">
-        <img src={iconSrc} alt="" className={styles.icon} />
+        <Icon className={styles.icon} />
       </span>
     </span>
   );

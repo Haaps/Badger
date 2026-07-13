@@ -1,7 +1,7 @@
 .panel {
   display: flex;
   align-items: stretch;
-  height: 640px;
+  height: var(--summary-panel-height, 640px);
   border: var(--stroke-regular) solid var(--neutral-100);
   border-radius: 0 var(--corner-radius-medium) var(--corner-radius-medium) 0;
   background: var(--neutral-0);
@@ -16,7 +16,7 @@
 
 .panelCollapsed {
   width: auto;
-  min-height: 640px;
+  min-height: var(--summary-panel-height, 640px);
 }
 
 .panelCollapsed.panelFillHeight {
@@ -24,7 +24,7 @@
 }
 
 .panelCollapsed .sidebar {
-  min-height: 640px;
+  min-height: var(--summary-panel-height, 640px);
   border-right: none;
 }
 
@@ -63,6 +63,7 @@
 }
 
 .sidebarChevron {
+  display: block;
   width: 10px;
   height: 10px;
   color: var(--neutral-500);
@@ -111,7 +112,8 @@
   flex-direction: column;
   gap: 24px;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .bodyMain {
@@ -168,11 +170,12 @@
 }
 
 .closeIcon {
+  display: block;
   width: 12px;
   height: 12px;
 }
 
-.messageBlock {
+.introBlock {
   display: flex;
   flex-direction: column;
   gap: var(--padding-x-small);
@@ -280,7 +283,7 @@
   margin: 0;
   font-family: var(--typography-font-family);
   font-size: var(--typography-xs-regular-font-size);
-  font-weight: 500;
+  font-weight: var(--typography-base-bold-font-weight);
   line-height: var(--typography-xs-regular-line-height);
   letter-spacing: var(--typography-xs-regular-letter-spacing);
   color: var(--neutral-500);
@@ -299,9 +302,79 @@
 }
 
 .singleSelect,
-.valueField {
+.valueField,
+.characterLimitField {
   width: 100%;
   max-width: none;
+}
+
+.resolutionSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-x-small);
+  width: 100%;
+}
+
+.resolutionLabel {
+  margin: 0;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-base-medium-font-size);
+  font-weight: var(--typography-base-medium-font-weight);
+  line-height: var(--typography-base-medium-line-height);
+  letter-spacing: var(--typography-base-medium-letter-spacing);
+  color: var(--neutral-500);
+  word-break: break-word;
+}
+
+.resolutionOptions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-x-small);
+  width: 100%;
+}
+
+.resolutionRadio {
+  width: 100%;
+}
+
+.booleanValueOptionsDisabled {
+  opacity: 0.3;
+}
+
+.dateFormatHint {
+  color: var(--neutral-300);
+  font-weight: var(--typography-base-regular-font-weight);
+}
+
+.characterLimitInputSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-x-small);
+  width: 100%;
+}
+
+.characterLimitWarning {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: var(--padding-x-small);
+  border: var(--stroke-regular) solid var(--red-250);
+  border-radius: var(--corner-radius-small);
+  background: var(--red-50);
+}
+
+.characterLimitWarningText {
+  flex: 1 0 0;
+  min-width: 0;
+  margin: 0;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-small-regular-font-size);
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: var(--typography-small-regular-line-height);
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+  word-break: break-word;
 }
 
 .applySection {

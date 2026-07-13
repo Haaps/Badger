@@ -1,0 +1,14 @@
+export function StagedIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 12 12" fill="none" aria-hidden="true">
+      <g id="StagedIcon-Time-Clock-Circle Streamline Micro" clipPath="url(#StagedIcon-clip0_1171_3919)">
+<path id="StagedIcon-Vector" fillRule="evenodd" clipRule="evenodd" d="M0 6C0 4.4087 0.632141 2.88258 1.75736 1.75736C2.88258 0.632141 4.4087 0 6 0C7.5913 0 9.11742 0.632141 10.2426 1.75736C11.3679 2.88258 12 4.4087 12 6C12 7.5913 11.3679 9.11742 10.2426 10.2426C9.11742 11.3679 7.5913 12 6 12C4.4087 12 2.88258 11.3679 1.75736 10.2426C0.632141 9.11742 0 7.5913 0 6ZM6.75 3.0228C6.75 2.82389 6.67098 2.63312 6.53033 2.49247C6.38968 2.35182 6.19891 2.2728 6 2.2728C5.80109 2.2728 5.61032 2.35182 5.46967 2.49247C5.32902 2.63312 5.25 2.82389 5.25 3.0228V6C5.25 6.414 5.586 6.75 6 6.75H8.4C8.59891 6.75 8.78968 6.67098 8.93033 6.53033C9.07098 6.38968 9.15 6.19891 9.15 6C9.15 5.80109 9.07098 5.61032 8.93033 5.46967C8.78968 5.32902 8.59891 5.25 8.4 5.25H6.75V3.0228Z" fill="#FF9500"/>
+</g>
+<defs>
+<clipPath id="StagedIcon-clip0_1171_3919">
+<rect width="12" height="12" fill="white"/>
+</clipPath>
+</defs>
+    </svg>
+  );
+}

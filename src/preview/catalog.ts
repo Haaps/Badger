@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { HowToUsePage } from "./pages/HowToUsePage";
 import { ButtonPage } from "./pages/ButtonPage";
 import { CheckboxPage } from "./pages/CheckboxPage";
 import { FilterBarPage } from "./pages/FilterBarPage";
@@ -8,18 +9,35 @@ import { SegmentedControlPage } from "./pages/SegmentedControlPage";
 import { MultiSelectMenuPage } from "./pages/MultiSelectMenuPage";
 import { SingleSelectPage } from "./pages/SingleSelectPage";
 import { DataTablePage } from "./pages/DataTablePage";
-import { SummaryPanelPage } from "./pages/SummaryPanelPage";
+import {
+  SummaryPanelListPage,
+  SummaryPanelTextPage,
+  SummaryPanelBooleanPage,
+  SummaryPanelDatePage,
+} from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
 import { TextFieldPage } from "./pages/TextFieldPage";
+import { TextAreaFieldPage } from "./pages/TextAreaFieldPage";
 import { TokensPage } from "./pages/TokensPage";
 
 export type ComponentEntry = {
   path: string;
   label: string;
-  Page: ComponentType;
+  Page?: ComponentType;
+  children?: ComponentEntry[];
+  /** Renders at the top of the nav as a guide link, separated from components. */
+  isGuide?: boolean;
 };
 
+/** When adding routes or changing integration patterns, also update HowToUsePage.tsx and usageSnippets.ts. */
+
 export const componentCatalog: ComponentEntry[] = [
+  {
+    path: "how-to-use",
+    label: "How to Use",
+    Page: HowToUsePage,
+    isGuide: true,
+  },
   {
     path: "tokens",
     label: "Design Tokens",
@@ -76,9 +94,35 @@ export const componentCatalog: ComponentEntry[] = [
     Page: TextFieldPage,
   },
   {
+    path: "text-area-field",
+    label: "Text Area Field",
+    Page: TextAreaFieldPage,
+  },
+  {
     path: "summary-panel",
     label: "Summary Panel",
-    Page: SummaryPanelPage,
+    children: [
+      {
+        path: "summary-panel/list-validation",
+        label: "List validation",
+        Page: SummaryPanelListPage,
+      },
+      {
+        path: "summary-panel/text-validation",
+        label: "Text validation",
+        Page: SummaryPanelTextPage,
+      },
+      {
+        path: "summary-panel/boolean-validation",
+        label: "Boolean validation",
+        Page: SummaryPanelBooleanPage,
+      },
+      {
+        path: "summary-panel/date-validation",
+        label: "Date validation",
+        Page: SummaryPanelDatePage,
+      },
+    ],
   },
   {
     path: "data-table",
@@ -86,3 +130,19 @@ export const componentCatalog: ComponentEntry[] = [
     Page: DataTablePage,
   },
 ];
+
+export function getRoutableEntries(catalog: ComponentEntry[] = componentCatalog) {
+  const routes: Array<Required<Pick<ComponentEntry, "path" | "Page">>> = [];
+
+  for (const entry of catalog) {
+    if (entry.Page) {
+      routes.push({ path: entry.path, Page: entry.Page });
+    }
+
+    if (entry.children) {
+      routes.push(...getRoutableEntries(entry.children));
+    }
+  }
+
+  return routes;
+}

@@ -39,6 +39,7 @@ export function getSegments(counts: StackedBarChartCounts): ChartSegment[] {
   }));
 }
 
+/** Gallery-only: randomizes segment counts for interactive StackedBarChart preview. */
 export function randomSplit(total: number): StackedBarChartCounts {
   const first = Math.floor(Math.random() * (total + 1));
   const second = Math.floor(Math.random() * (total - first + 1));

@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Switch } from "../../components/Switch";
-import handleOnIcon from "../../components/Switch/assets/handle-on.svg";
-import handleOnHoverIcon from "../../components/Switch/assets/handle-on-hover.svg";
+import { HandleOnHoverIcon, HandleOnIcon } from "../../components/Switch/icons";
 import switchStyles from "../../components/Switch/Switch.module.css";
 import { UsageCodePanel } from "../UsageCodePanel";
 import { switchUsage } from "../usageSnippets";
@@ -34,18 +33,14 @@ function StaticSwitch({
     .filter(Boolean)
     .join(" ");
 
+  const HandleIcon = hovered ? HandleOnHoverIcon : HandleOnIcon;
+
   return (
     <span className={switchStyles.root}>
       <span className={switchStyles.control}>
         <span className={trackClassNames} aria-hidden="true">
           <span className={handleClassNames}>
-            {checked && (
-              <img
-                src={hovered ? handleOnHoverIcon : handleOnIcon}
-                alt=""
-                className={switchStyles.handleIcon}
-              />
-            )}
+            {checked && <HandleIcon className={switchStyles.handleIcon} />}
           </span>
         </span>
       </span>
