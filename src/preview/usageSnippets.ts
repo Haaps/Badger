@@ -239,12 +239,16 @@ export function MyView() {
   );
 }
 
-// validationType: "list" | "text" | "boolean" | "date"
-// errorType: list/boolean/date → "invalid-value" | "missing-value"
+// validationType: "list" | "text" | "boolean" | "date" | "date-time" | "numeric"
+// errorType: list/boolean/date/date-time → "invalid-value" | "missing-value"
 //            text → "exceeded-character-limit" | "value-required"
+//            numeric → "exceeded-decimal-limit" | "missing-value" | "invalid-value"
+//                       | "below-min-value" | "above-max-value"
 // boolean: pass booleanValueOptions (dynamic labels/values)
 // date: pass dateFormat from column schema (e.g. "yyyy/mm/dd"); panel validates input
+// date-time: pass dateTimeFormat (e.g. "yyyy/mm/dd hh:mm:ss"); panel validates input
 // text: pass characterLimit, exceededLimitCellText, enteredCharacterCount
+// numeric: pass decimalMax, minValue, maxValue, enteredDecimalCount, invalidValue
 // layout: fillHeight for table sidebars, or panelHeight (default 640)`,
 };
 

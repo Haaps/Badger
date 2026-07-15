@@ -43,6 +43,18 @@
   max-width: 420px;
 }
 
+.demoColumnWide {
+  max-width: 840px;
+}
+
+.demoColumnWide .errorTypeControl {
+  width: 100%;
+}
+
+.demoColumnWide .hint {
+  max-width: none;
+}
+
 .demoControls {
   display: flex;
   flex-direction: column;

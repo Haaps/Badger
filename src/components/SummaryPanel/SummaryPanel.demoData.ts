@@ -23,6 +23,12 @@ export const DEMO_DATE_CELL_COUNT = 8;
 export const DEMO_DATE_HOLE_COUNT = 3;
 export const DEMO_DATE_INITIAL_STAGED_VALUE = "2024/03/15";
 
+export const DEMO_DATE_TIME_INVALID_VALUE = "15-03-2024 25:99:00";
+export const DEMO_DATE_TIME_FORMAT = "yyyy/mm/dd hh:mm:ss";
+export const DEMO_DATE_TIME_CELL_COUNT = 6;
+export const DEMO_DATE_TIME_HOLE_COUNT = 2;
+export const DEMO_DATE_TIME_INITIAL_STAGED_VALUE = "2024/03/15 14:30:00";
+
 export const DEMO_VALUE_OPTIONS: SelectMenuOption[] = [
   { value: "bnd", label: "Bnd" },
   { value: "lst-a", label: "List Value A" },
@@ -72,3 +78,25 @@ export function createGeologicalSummaryText(length: number) {
 export const DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT = createGeologicalSummaryText(
   DEMO_ENTERED_CHARACTER_COUNT,
 );
+
+export const DEMO_NUMERIC_INVALID_VALUE = "abc";
+export const DEMO_NUMERIC_BELOW_MIN_VALUE = "1.5";
+export const DEMO_NUMERIC_ABOVE_MAX_VALUE = "99.9";
+export const DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE = "12.3456";
+/** Column schema allows at most this many decimal places. */
+export const DEMO_DECIMAL_MAX = 2;
+/** Decimal places in the invalid cell value (must exceed DEMO_DECIMAL_MAX). */
+export const DEMO_ENTERED_DECIMAL_COUNT = 4;
+export const DEMO_NUMERIC_MIN_VALUE = 2;
+export const DEMO_NUMERIC_MAX_VALUE = 50;
+export const DEMO_NUMERIC_CELL_COUNT = 8;
+export const DEMO_NUMERIC_HOLE_COUNT = 3;
+export const DEMO_NUMERIC_MISSING_CELL_COUNT = 5;
+export const DEMO_NUMERIC_MISSING_HOLE_COUNT = 2;
+export const DEMO_NUMERIC_BELOW_MIN_CELL_COUNT = 4;
+export const DEMO_NUMERIC_BELOW_MIN_SINGLE_CELL_COUNT = 1;
+export const DEMO_NUMERIC_ABOVE_MAX_CELL_COUNT = 6;
+export const DEMO_NUMERIC_EXCEEDED_DECIMAL_CELL_COUNT = 7;
+export const DEMO_NUMERIC_INITIAL_STAGED_VALUE = "12.35";
+export const DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION = 6;
+export const DEMO_DEFAULT_NEW_DECIMAL_LIMIT = "4";
