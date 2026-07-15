@@ -3,7 +3,7 @@
  * editable (pick a fix) → staged (pending review) → approved (committed).
  *
  * `validationType` + `errorType` select copy and input UI (list select, text area,
- * boolean radios, date field, or character-limit resolution). Apply scope controls whether the
+ * boolean radios, date field, date/time fields, numeric fields, or character-limit resolution). Apply scope controls whether the
  * fix targets one cell or matching errors across selected drill holes.
  *
  * Omitted props fall back to demo constants from SummaryPanel.demoData so the gallery
@@ -20,8 +20,16 @@ import { TextField } from "../TextField";
 import { CloseIcon, SidebarChevronIcon } from "./icons";
 import {
   getDateFormatErrorMessage,
+  getDateTimeFormatErrorMessage,
   isValidDateForFormat,
+  isValidDateTimeForFormat,
 } from "./dateFormatValidation";
+import {
+  getNumericValidationErrorMessage,
+  isValidNumericValue,
+  parseNewDecimalLimitValue,
+  roundToDecimalLimit,
+} from "./numericValidation";
 import {
   DEMO_BOOLEAN_CELL_COUNT,
   DEMO_BOOLEAN_HOLE_COUNT,
@@ -33,6 +41,11 @@ import {
   DEMO_DATE_HOLE_COUNT,
   DEMO_DATE_INITIAL_STAGED_VALUE,
   DEMO_DATE_INVALID_VALUE,
+  DEMO_DATE_TIME_CELL_COUNT,
+  DEMO_DATE_TIME_FORMAT,
+  DEMO_DATE_TIME_HOLE_COUNT,
+  DEMO_DATE_TIME_INITIAL_STAGED_VALUE,
+  DEMO_DATE_TIME_INVALID_VALUE,
   DEMO_CELL_COUNT,
   DEMO_CHARACTER_LIMIT,
   DEMO_DEFAULT_SELECTED_HOLES,
@@ -48,13 +61,33 @@ import {
   DEMO_TEXT_INITIAL_STAGED_VALUE,
   DEMO_TEXT_INVALID_VALUE,
   DEMO_VALUE_OPTIONS,
+  DEMO_DECIMAL_MAX,
+  DEMO_DEFAULT_NEW_DECIMAL_LIMIT,
+  DEMO_ENTERED_DECIMAL_COUNT,
+  DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
+  DEMO_NUMERIC_ABOVE_MAX_CELL_COUNT,
+  DEMO_NUMERIC_ABOVE_MAX_VALUE,
+  DEMO_NUMERIC_BELOW_MIN_CELL_COUNT,
+  DEMO_NUMERIC_BELOW_MIN_VALUE,
+  DEMO_NUMERIC_CELL_COUNT,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_CELL_COUNT,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE,
+  DEMO_NUMERIC_HOLE_COUNT,
+  DEMO_NUMERIC_INITIAL_STAGED_VALUE,
+  DEMO_NUMERIC_INVALID_VALUE,
+  DEMO_NUMERIC_MAX_VALUE,
+  DEMO_NUMERIC_MIN_VALUE,
+  DEMO_NUMERIC_MISSING_CELL_COUNT,
+  DEMO_NUMERIC_MISSING_HOLE_COUNT,
   createGeologicalSummaryText,
 } from "./SummaryPanel.demoData";
 import type { SelectMenuOption } from "../SelectMenu";
 import type {
   BooleanValueOption,
   CharacterLimitResolution,
+  DecimalLimitResolution,
   ListSummaryErrorType,
+  NumericSummaryErrorType,
   SummaryApplyImpact,
   SummaryApplyScope,
   SummaryErrorType,
@@ -75,6 +108,15 @@ const CHARACTER_LIMIT_RESOLUTION_OPTIONS = [
   { value: "increase-limit", label: "Increase character limit manually" },
 ] as const satisfies ReadonlyArray<{
   value: CharacterLimitResolution;
+  label: string;
+}>;
+
+const DECIMAL_LIMIT_RESOLUTION_OPTIONS = [
+  { value: "round-to-limit", label: "Round to current decimal limit" },
+  { value: "increase-limit", label: "Increase max decimal limit" },
+  { value: "adjust-manually", label: "Adjust value manually" },
+] as const satisfies ReadonlyArray<{
+  value: DecimalLimitResolution;
   label: string;
 }>;
 
@@ -123,8 +165,41 @@ const DATE_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
   },
 };
 
+const DATE_TIME_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
+  "invalid-value": {
+    editableTitle: "Invalid Date/Time Value",
+    helperText: "Enter a valid date and time to replace it.",
+  },
+  "missing-value": {
+    editableTitle: "Value required",
+    helperText: "Enter a date and time.",
+  },
+};
+
+const NUMERIC_ERROR_COPY: Record<NumericSummaryErrorType, PanelCopy> = {
+  "exceeded-decimal-limit": {
+    editableTitle: "",
+  },
+  "missing-value": {
+    editableTitle: "Value required",
+  },
+  "invalid-value": {
+    editableTitle: "Invalid value: must be numeric",
+  },
+  "below-min-value": {
+    editableTitle: "",
+  },
+  "above-max-value": {
+    editableTitle: "",
+  },
+};
+
 function isBooleanValidation(validationType: SummaryValidationType) {
   return validationType === "boolean";
+}
+
+function isNumericValidation(validationType: SummaryValidationType) {
+  return validationType === "numeric";
 }
 
 function getPanelCopy(
@@ -139,8 +214,16 @@ function getPanelCopy(
     return DATE_ERROR_COPY[errorType as ListSummaryErrorType];
   }
 
+  if (validationType === "date-time") {
+    return DATE_TIME_ERROR_COPY[errorType as ListSummaryErrorType];
+  }
+
   if (validationType === "list") {
     return LIST_ERROR_COPY[errorType as ListSummaryErrorType];
+  }
+
+  if (validationType === "numeric") {
+    return NUMERIC_ERROR_COPY[errorType as NumericSummaryErrorType];
   }
 
   return TEXT_ERROR_COPY[errorType as TextSummaryErrorType];
@@ -162,6 +245,20 @@ function isExceededCharacterLimitError(
   errorType: SummaryErrorType,
 ) {
   return validationType === "text" && errorType === "exceeded-character-limit";
+}
+
+function isExceededDecimalLimitError(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+) {
+  return validationType === "numeric" && errorType === "exceeded-decimal-limit";
+}
+
+function isNumericMissingValueError(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+) {
+  return validationType === "numeric" && errorType === "missing-value";
 }
 
 // Character-limit fixes encode resolution in the staged value string passed to
@@ -397,6 +494,254 @@ function getCharacterLimitTrimWarningMessage(newLimit: string) {
   return `Some cells content still exceed ${parsedLimit} characters and will be trimmed automatically when this change is staged.`;
 }
 
+// Decimal-limit fixes encode resolution in the staged value string:
+// "round-to-limit", "increase-limit:{digits}", or a manual numeric value.
+function getExceededDecimalLimitStagedValue(
+  resolution: DecimalLimitResolution,
+  newLimit: string,
+  manualValue: string,
+) {
+  if (resolution === "round-to-limit") {
+    return "round-to-limit";
+  }
+
+  if (resolution === "increase-limit") {
+    return `increase-limit:${newLimit.trim()}`;
+  }
+
+  return manualValue.trim();
+}
+
+function parseExceededDecimalLimitStagedValue(value: string): {
+  resolution: DecimalLimitResolution;
+  newLimit: string;
+  manualValue: string;
+} {
+  if (value.startsWith("increase-limit:")) {
+    return {
+      resolution: "increase-limit",
+      newLimit: value.slice("increase-limit:".length),
+      manualValue: "",
+    };
+  }
+
+  if (value === "round-to-limit") {
+    return {
+      resolution: "round-to-limit",
+      newLimit: "",
+      manualValue: "",
+    };
+  }
+
+  return {
+    resolution: "adjust-manually",
+    newLimit: "",
+    manualValue: value,
+  };
+}
+
+function getExceededDecimalLimitResultFromResolution(
+  resolution: DecimalLimitResolution,
+  newLimit: string,
+  decimalMax: number,
+  originalValue: string,
+) {
+  if (resolution === "round-to-limit") {
+    return roundToDecimalLimit(originalValue, decimalMax);
+  }
+
+  if (resolution === "increase-limit") {
+    const parsedLimit = parseNewDecimalLimitValue(newLimit);
+    if (parsedLimit === null) {
+      return originalValue;
+    }
+
+    return roundToDecimalLimit(originalValue, parsedLimit);
+  }
+
+  return newLimit.trim() || originalValue;
+}
+
+function getExceededDecimalLimitResultText(
+  resolutionValue: string,
+  decimalMax: number,
+  originalValue: string,
+) {
+  const parsed = parseExceededDecimalLimitStagedValue(resolutionValue);
+
+  return getExceededDecimalLimitResultFromResolution(
+    parsed.resolution,
+    parsed.resolution === "adjust-manually" ? parsed.manualValue : parsed.newLimit,
+    decimalMax,
+    originalValue,
+  );
+}
+
+function getExceededDecimalLimitPreviewDisplayText(
+  resolution: DecimalLimitResolution,
+  newLimit: string,
+  manualValue: string,
+  decimalMax: number,
+  originalValue: string,
+  committedStagedValue: string,
+) {
+  if (
+    resolution === "increase-limit" &&
+    parseNewDecimalLimitValue(newLimit) === null
+  ) {
+    return getExceededDecimalLimitResultText(
+      committedStagedValue,
+      decimalMax,
+      originalValue,
+    );
+  }
+
+  return getExceededDecimalLimitResultFromResolution(
+    resolution,
+    resolution === "adjust-manually" ? manualValue : newLimit,
+    decimalMax,
+    originalValue,
+  );
+}
+
+function getExceededDecimalLimitStagedAsDisplayText(
+  isApproved: boolean,
+  isStaged: boolean,
+  hasStagedChanges: boolean,
+  stagedValue: string,
+  resolution: DecimalLimitResolution,
+  newLimit: string,
+  manualValue: string,
+  decimalMax: number,
+  originalValue: string,
+) {
+  if (isApproved || (isStaged && !hasStagedChanges)) {
+    return getExceededDecimalLimitResultText(stagedValue, decimalMax, originalValue);
+  }
+
+  if (isStaged) {
+    return getExceededDecimalLimitPreviewDisplayText(
+      resolution,
+      newLimit,
+      manualValue,
+      decimalMax,
+      originalValue,
+      stagedValue,
+    );
+  }
+
+  return "";
+}
+
+function syncExceededDecimalLimitResolutionState(
+  resolutionValue: string,
+  setResolution: (resolution: DecimalLimitResolution) => void,
+  setNewLimit: (newLimit: string) => void,
+  setManualValue: (manualValue: string) => void,
+) {
+  const parsed = parseExceededDecimalLimitStagedValue(resolutionValue);
+  setResolution(parsed.resolution);
+  setNewLimit(parsed.newLimit);
+  setManualValue(parsed.manualValue);
+}
+
+function canCommitExceededDecimalLimitResolution(
+  resolution: DecimalLimitResolution,
+  newLimit: string,
+  manualValue: string,
+  decimalMax: number,
+) {
+  if (resolution === "round-to-limit") {
+    return true;
+  }
+
+  if (resolution === "increase-limit") {
+    return parseNewDecimalLimitValue(newLimit) !== null;
+  }
+
+  return isValidNumericValue(manualValue, { decimalMax });
+}
+
+function resolveMaxEnteredDecimalCountInSelection(
+  selectedHoles: string[],
+  maxEnteredDecimalCountInSelection: number | undefined,
+  getMaxEnteredDecimalCountInSelection:
+    | ((selectedHoles: string[]) => number | null)
+    | undefined,
+) {
+  const resolvedMax =
+    getMaxEnteredDecimalCountInSelection?.(selectedHoles) ??
+    maxEnteredDecimalCountInSelection ??
+    DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION;
+
+  return resolvedMax > 0 ? resolvedMax : null;
+}
+
+function shouldShowDecimalLimitRoundWarning(
+  applyScope: SummaryApplyScope,
+  resolution: DecimalLimitResolution,
+  newLimit: string,
+  selectedHoles: string[],
+  maxEnteredDecimalCountInSelection: number | undefined,
+  getMaxEnteredDecimalCountInSelection:
+    | ((selectedHoles: string[]) => number | null)
+    | undefined,
+) {
+  if (applyScope !== "holes" || resolution !== "increase-limit") {
+    return false;
+  }
+
+  const parsedLimit = parseNewDecimalLimitValue(newLimit);
+  if (parsedLimit === null) {
+    return false;
+  }
+
+  const maxInSelection = resolveMaxEnteredDecimalCountInSelection(
+    selectedHoles,
+    maxEnteredDecimalCountInSelection,
+    getMaxEnteredDecimalCountInSelection,
+  );
+
+  if (maxInSelection === null) {
+    return false;
+  }
+
+  return parsedLimit < maxInSelection;
+}
+
+function getDecimalLimitRoundWarningMessage(newLimit: string) {
+  const parsedLimit = parseNewDecimalLimitValue(newLimit);
+  if (parsedLimit === null) {
+    return "";
+  }
+
+  return `Some cells still exceed ${parsedLimit} decimal places and will be rounded automatically when this change is staged.`;
+}
+
+function getNumericInputValidationOptions(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+  minValue: number,
+  maxValue: number,
+  decimalMax: number,
+) {
+  if (!isNumericValidation(validationType)) {
+    return {};
+  }
+
+  const options = { decimalMax };
+
+  if (errorType === "below-min-value") {
+    return { ...options, minValue };
+  }
+
+  if (errorType === "above-max-value") {
+    return { ...options, maxValue };
+  }
+
+  return options;
+}
+
 type ValueInputMode = "select" | "custom";
 
 function StagedIcon() {
@@ -485,6 +830,11 @@ function getTitle(
   errorType: SummaryErrorType,
   characterLimit: number,
   enteredCharacterCount: number,
+  decimalMax: number,
+  enteredDecimalCount: number,
+  minValue: number,
+  maxValue: number,
+  invalidValue: string,
 ) {
   switch (panelState) {
     case "staged":
@@ -494,6 +844,15 @@ function getTitle(
     default:
       if (isExceededCharacterLimitError(validationType, errorType)) {
         return `${characterLimit} character limit: ${enteredCharacterCount} entered`;
+      }
+      if (isExceededDecimalLimitError(validationType, errorType)) {
+        return `${decimalMax} decimal max: ${enteredDecimalCount} entered`;
+      }
+      if (errorType === "below-min-value") {
+        return `${invalidValue} entered: ${minValue} min`;
+      }
+      if (errorType === "above-max-value") {
+        return `${invalidValue} entered: ${maxValue} max`;
       }
       return getPanelCopy(validationType, errorType).editableTitle;
   }
@@ -506,6 +865,26 @@ function getSummaryMessage(
   cellCount: number,
   holeCount: number,
 ) {
+  if (validationType === "numeric") {
+    switch (errorType) {
+      case "exceeded-decimal-limit":
+        return `${formatCountLabel(cellCount, "cell", "cells")} in this column exceed the decimal max.`;
+      case "missing-value":
+        return `${formatCountLabel(cellCount, "cell", "cells")} in this column are missing values.`;
+      case "invalid-value":
+        return `\u201C${invalidValue}\u201D appears in ${formatCountLabel(cellCount, "field", "fields")} within this column.`;
+      case "below-min-value":
+        if (cellCount <= 1) {
+          return `\u201C${invalidValue}\u201D is below the min value`;
+        }
+        return `${formatCountLabel(cellCount, "cell", "cells")} in this column are identical and below the min value`;
+      case "above-max-value":
+        return `${formatCountLabel(cellCount, "cell", "cells")} in this column are identical and above the max value`;
+      default:
+        break;
+    }
+  }
+
   if (validationType === "boolean") {
     if (errorType === "missing-value") {
       return `${formatCountLabel(cellCount, "cell", "cells")} are missing values across ${formatCountLabel(holeCount, "hole", "holes")}.`;
@@ -514,7 +893,7 @@ function getSummaryMessage(
     return `\u201C${invalidValue}\u201D appears in ${formatCountLabel(cellCount, "cell", "cells")} across ${formatCountLabel(holeCount, "hole", "holes")}.`;
   }
 
-  if (validationType === "date") {
+  if (validationType === "date" || validationType === "date-time") {
     if (errorType === "missing-value") {
       return `${formatCountLabel(cellCount, "cell", "cells")} are missing values across ${formatCountLabel(holeCount, "hole", "holes")}.`;
     }
@@ -545,7 +924,9 @@ function getPreviousValueLabel(
   if (errorType === "missing-value") {
     return validationType === "list" ||
       validationType === "boolean" ||
-      validationType === "date"
+      validationType === "date" ||
+      validationType === "date-time" ||
+      validationType === "numeric"
       ? "(no value)"
       : "";
   }
@@ -647,9 +1028,18 @@ export function SummaryPanel({
   getMaxEnteredCharacterCountInSelection,
   defaultCharacterLimitResolution = "trim-to-limit",
   defaultNewCharacterLimit = "",
+  decimalMax: decimalMaxProp,
+  enteredDecimalCount: enteredDecimalCountProp,
+  minValue: minValueProp,
+  maxValue: maxValueProp,
+  maxEnteredDecimalCountInSelection: maxEnteredDecimalCountInSelectionProp,
+  getMaxEnteredDecimalCountInSelection,
+  defaultDecimalLimitResolution = "round-to-limit",
+  defaultNewDecimalLimit = "",
   valueOptions = DEMO_VALUE_OPTIONS,
   booleanValueOptions = DEMO_BOOLEAN_VALUE_OPTIONS,
   dateFormat: dateFormatProp,
+  dateTimeFormat: dateTimeFormatProp,
   holeOptions = DEMO_HOLE_OPTIONS,
   defaultSelectedHoles = DEMO_DEFAULT_SELECTED_HOLES,
   defaultApplyScope = "cell",
@@ -668,16 +1058,33 @@ export function SummaryPanel({
   // Demo fallbacks — see module comment; omit these props only in the gallery.
   const invalidValue =
     invalidValueProp ??
-    (validationType === "text"
-      ? DEMO_TEXT_INVALID_VALUE
-      : validationType === "boolean"
-        ? DEMO_BOOLEAN_INVALID_VALUE
-        : validationType === "date"
-          ? DEMO_DATE_INVALID_VALUE
-          : DEMO_INVALID_VALUE);
+    (validationType === "numeric"
+      ? errorType === "exceeded-decimal-limit"
+        ? DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE
+        : errorType === "below-min-value"
+          ? DEMO_NUMERIC_BELOW_MIN_VALUE
+          : errorType === "above-max-value"
+            ? DEMO_NUMERIC_ABOVE_MAX_VALUE
+            : errorType === "invalid-value"
+              ? DEMO_NUMERIC_INVALID_VALUE
+              : DEMO_INVALID_VALUE
+      : validationType === "text"
+        ? DEMO_TEXT_INVALID_VALUE
+        : validationType === "boolean"
+          ? DEMO_BOOLEAN_INVALID_VALUE
+          : validationType === "date"
+            ? DEMO_DATE_INVALID_VALUE
+            : validationType === "date-time"
+              ? DEMO_DATE_TIME_INVALID_VALUE
+              : DEMO_INVALID_VALUE);
   const dateFormat = dateFormatProp ?? DEMO_DATE_FORMAT;
+  const dateTimeFormat = dateTimeFormatProp ?? DEMO_DATE_TIME_FORMAT;
   const characterLimit = characterLimitProp ?? DEMO_CHARACTER_LIMIT;
   const enteredCharacterCount = enteredCharacterCountProp ?? DEMO_ENTERED_CHARACTER_COUNT;
+  const decimalMax = decimalMaxProp ?? DEMO_DECIMAL_MAX;
+  const enteredDecimalCount = enteredDecimalCountProp ?? DEMO_ENTERED_DECIMAL_COUNT;
+  const minValue = minValueProp ?? DEMO_NUMERIC_MIN_VALUE;
+  const maxValue = maxValueProp ?? DEMO_NUMERIC_MAX_VALUE;
   const originalExceededLimitTextRef = useRef(
     getOriginalExceededLimitCellText(
       exceededLimitCellTextProp,
@@ -687,38 +1094,62 @@ export function SummaryPanel({
   const originalExceededLimitText = originalExceededLimitTextRef.current;
   const cellCount =
     cellCountProp ??
-    (isValueRequiredError(errorType)
-      ? DEMO_MISSING_CELL_COUNT
-      : validationType === "text"
-        ? DEMO_TEXT_CELL_COUNT
-        : validationType === "boolean"
-          ? DEMO_BOOLEAN_CELL_COUNT
-          : validationType === "date"
-            ? DEMO_DATE_CELL_COUNT
-            : DEMO_CELL_COUNT);
+    (validationType === "numeric"
+      ? isNumericMissingValueError(validationType, errorType)
+        ? DEMO_NUMERIC_MISSING_CELL_COUNT
+        : errorType === "exceeded-decimal-limit"
+          ? DEMO_NUMERIC_EXCEEDED_DECIMAL_CELL_COUNT
+          : errorType === "below-min-value"
+            ? DEMO_NUMERIC_BELOW_MIN_CELL_COUNT
+            : errorType === "above-max-value"
+              ? DEMO_NUMERIC_ABOVE_MAX_CELL_COUNT
+              : DEMO_NUMERIC_CELL_COUNT
+      : isValueRequiredError(errorType)
+        ? DEMO_MISSING_CELL_COUNT
+        : validationType === "text"
+          ? DEMO_TEXT_CELL_COUNT
+          : validationType === "boolean"
+            ? DEMO_BOOLEAN_CELL_COUNT
+            : validationType === "date"
+              ? DEMO_DATE_CELL_COUNT
+              : validationType === "date-time"
+                ? DEMO_DATE_TIME_CELL_COUNT
+                : DEMO_CELL_COUNT);
   const holeCount =
     holeCountProp ??
-    (isValueRequiredError(errorType)
-      ? DEMO_MISSING_HOLE_COUNT
-      : validationType === "text"
-        ? DEMO_TEXT_HOLE_COUNT
-        : validationType === "boolean"
-          ? DEMO_BOOLEAN_HOLE_COUNT
-          : validationType === "date"
-            ? DEMO_DATE_HOLE_COUNT
-            : DEMO_HOLE_COUNT);
+    (validationType === "numeric"
+      ? isNumericMissingValueError(validationType, errorType)
+        ? DEMO_NUMERIC_MISSING_HOLE_COUNT
+        : DEMO_NUMERIC_HOLE_COUNT
+      : isValueRequiredError(errorType)
+        ? DEMO_MISSING_HOLE_COUNT
+        : validationType === "text"
+          ? DEMO_TEXT_HOLE_COUNT
+          : validationType === "boolean"
+            ? DEMO_BOOLEAN_HOLE_COUNT
+            : validationType === "date"
+              ? DEMO_DATE_HOLE_COUNT
+              : validationType === "date-time"
+                ? DEMO_DATE_TIME_HOLE_COUNT
+                : DEMO_HOLE_COUNT);
   const defaultBooleanValue = booleanValueOptions[0]?.value ?? "";
   const initialStagedValue =
     initialStagedValueProp ??
-    (validationType === "text"
-      ? isExceededCharacterLimitError(validationType, errorType)
-        ? defaultCharacterLimitResolution
-        : DEMO_TEXT_INITIAL_STAGED_VALUE
-      : validationType === "boolean"
-        ? DEMO_BOOLEAN_INITIAL_STAGED_VALUE
-        : validationType === "date"
-          ? DEMO_DATE_INITIAL_STAGED_VALUE
-          : "bnd");
+    (validationType === "numeric"
+      ? isExceededDecimalLimitError(validationType, errorType)
+        ? defaultDecimalLimitResolution
+        : DEMO_NUMERIC_INITIAL_STAGED_VALUE
+      : validationType === "text"
+        ? isExceededCharacterLimitError(validationType, errorType)
+          ? defaultCharacterLimitResolution
+          : DEMO_TEXT_INITIAL_STAGED_VALUE
+        : validationType === "boolean"
+          ? DEMO_BOOLEAN_INITIAL_STAGED_VALUE
+          : validationType === "date"
+            ? DEMO_DATE_INITIAL_STAGED_VALUE
+            : validationType === "date-time"
+              ? DEMO_DATE_TIME_INITIAL_STAGED_VALUE
+              : "bnd");
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const isCollapsedControlled = collapsedProp !== undefined;
   const collapsed = isCollapsedControlled ? collapsedProp : internalCollapsed;
@@ -767,6 +1198,26 @@ export function SummaryPanel({
   const [newCharacterLimit, setNewCharacterLimit] = useState(
     initialExceededLimitState?.newLimit ?? defaultNewCharacterLimit,
   );
+  const initialExceededDecimalLimitState = isExceededDecimalLimitError(
+    validationType,
+    errorType,
+  )
+    ? parseExceededDecimalLimitStagedValue(
+        opensInCommittedState ? initialStagedValue : defaultDecimalLimitResolution,
+      )
+    : null;
+  const [decimalLimitResolution, setDecimalLimitResolution] =
+    useState<DecimalLimitResolution>(
+      initialExceededDecimalLimitState?.resolution ?? defaultDecimalLimitResolution,
+    );
+  const [newDecimalLimit, setNewDecimalLimit] = useState(
+    initialExceededDecimalLimitState?.newLimit ??
+      defaultNewDecimalLimit ??
+      DEMO_DEFAULT_NEW_DECIMAL_LIMIT,
+  );
+  const [manualNumericValue, setManualNumericValue] = useState(
+    initialExceededDecimalLimitState?.manualValue ?? "",
+  );
 
   const isApproved = panelState === "approved";
   const isStaged = panelState === "staged";
@@ -776,42 +1227,109 @@ export function SummaryPanel({
     validationType === "list" && valueInputMode === "custom";
   const isTextValueRequired = isTextValueRequiredError(validationType, errorType);
   const isExceededLimit = isExceededCharacterLimitError(validationType, errorType);
+  const isExceededDecimalLimit = isExceededDecimalLimitError(validationType, errorType);
+  const isNumeric = isNumericValidation(validationType);
   const isBoolean = isBooleanValidation(validationType);
   const isDate = validationType === "date";
+  const isDateTime = validationType === "date-time";
   const panelCopy = getPanelCopy(validationType, errorType);
   const previousValueLabel = getPreviousValueLabel(validationType, errorType, invalidValue);
+  const numericValidationOptions = getNumericInputValidationOptions(
+    validationType,
+    errorType,
+    minValue,
+    maxValue,
+    decimalMax,
+  );
+  const trimmedNumericValue = isNumeric ? textValue.trim() : "";
+  const trimmedManualNumericValue = manualNumericValue.trim();
+  const showNumericInputError =
+    isNumeric &&
+    !isExceededDecimalLimit &&
+    trimmedNumericValue !== "" &&
+    !isValidNumericValue(trimmedNumericValue, numericValidationOptions);
+  const showManualNumericInputError =
+    isExceededDecimalLimit &&
+    decimalLimitResolution === "adjust-manually" &&
+    trimmedManualNumericValue !== "" &&
+    !isValidNumericValue(trimmedManualNumericValue, { decimalMax });
+  const isNumericValueCommittable =
+    !isNumeric ||
+    isExceededDecimalLimit ||
+    (trimmedNumericValue !== "" &&
+      isValidNumericValue(trimmedNumericValue, numericValidationOptions));
 
+  const trimmedDateTimeValue = isDateTime ? textValue.trim() : "";
   const trimmedDateValue = isDate ? textValue.trim() : "";
   const showDateFormatError =
     isDate &&
     trimmedDateValue !== "" &&
     !isValidDateForFormat(trimmedDateValue, dateFormat);
+  const showDateTimeFormatError =
+    isDateTime &&
+    trimmedDateTimeValue !== "" &&
+    !isValidDateTimeForFormat(trimmedDateTimeValue, dateTimeFormat);
   const isDateValueCommittable =
     !isDate || (trimmedDateValue !== "" && isValidDateForFormat(trimmedDateValue, dateFormat));
+  const isDateTimeValueCommittable =
+    !isDateTime ||
+    (trimmedDateTimeValue !== "" &&
+      isValidDateTimeForFormat(trimmedDateTimeValue, dateTimeFormat));
 
   const currentValue = isExceededLimit
     ? getExceededLimitStagedValue(characterLimitResolution, newCharacterLimit)
-    : validationType === "text" || validationType === "date"
-      ? textValue.trim()
-      : isCustomValueMode
-        ? customValue.trim()
-        : selectedValue;
+    : isExceededDecimalLimit
+      ? getExceededDecimalLimitStagedValue(
+          decimalLimitResolution,
+          newDecimalLimit,
+          manualNumericValue,
+        )
+      : validationType === "text" ||
+          validationType === "date" ||
+          validationType === "date-time" ||
+          validationType === "numeric"
+        ? textValue.trim()
+        : isCustomValueMode
+          ? customValue.trim()
+          : selectedValue;
 
   const canStageChange =
     isEditable &&
     (isExceededLimit
       ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
-      : isDate
-        ? isDateValueCommittable
-        : currentValue !== "");
+      : isExceededDecimalLimit
+        ? canCommitExceededDecimalLimitResolution(
+            decimalLimitResolution,
+            newDecimalLimit,
+            manualNumericValue,
+            decimalMax,
+          )
+        : isDateTime
+          ? isDateTimeValueCommittable
+          : isDate
+            ? isDateValueCommittable
+            : isNumeric
+              ? isNumericValueCommittable
+              : currentValue !== "");
   const hasStagedChanges =
     currentValue !== stagedValue || applyScope !== stagedApplyScope;
   const canUpdateStaged = isStaged && hasStagedChanges && (
     isExceededLimit
       ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
-      : isDate
-        ? isDateValueCommittable
-        : currentValue !== ""
+      : isExceededDecimalLimit
+        ? canCommitExceededDecimalLimitResolution(
+            decimalLimitResolution,
+            newDecimalLimit,
+            manualNumericValue,
+            decimalMax,
+          )
+        : isDateTime
+          ? isDateTimeValueCommittable
+          : isDate
+            ? isDateValueCommittable
+            : isNumeric
+              ? isNumericValueCommittable
+              : currentValue !== ""
   );
 
   const stagedAsText = isExceededLimit
@@ -825,15 +1343,29 @@ export function SummaryPanel({
         characterLimit,
         originalExceededLimitText,
       )
-    : isBoolean
-      ? resolveBooleanDisplayValue(stagedValue, booleanValueOptions)
-      : validationType === "list"
-        ? resolveDisplayValue(stagedValue, valueOptions)
-        : stagedValue;
+    : isExceededDecimalLimit
+      ? getExceededDecimalLimitStagedAsDisplayText(
+          isApproved,
+          isStaged,
+          hasStagedChanges,
+          stagedValue,
+          decimalLimitResolution,
+          newDecimalLimit,
+          manualNumericValue,
+          decimalMax,
+          invalidValue,
+        )
+      : isBoolean
+        ? resolveBooleanDisplayValue(stagedValue, booleanValueOptions)
+        : validationType === "list"
+          ? resolveDisplayValue(stagedValue, valueOptions)
+          : stagedValue;
 
   const previouslyText = isExceededLimit
     ? originalExceededLimitText
-    : previousValueLabel;
+    : isExceededDecimalLimit
+      ? invalidValue
+      : previousValueLabel;
 
   const applyImpact = useMemo(
     () =>
@@ -852,6 +1384,18 @@ export function SummaryPanel({
       selectedHoles,
       maxEnteredCharacterCountInSelectionProp,
       getMaxEnteredCharacterCountInSelection,
+    );
+
+  const showDecimalLimitRoundWarning =
+    isExceededDecimalLimit &&
+    !isApproved &&
+    shouldShowDecimalLimitRoundWarning(
+      applyScope,
+      decimalLimitResolution,
+      newDecimalLimit,
+      selectedHoles,
+      maxEnteredDecimalCountInSelectionProp,
+      getMaxEnteredDecimalCountInSelection,
     );
 
   const segmentedOptions = useMemo(() => {
@@ -900,6 +1444,14 @@ export function SummaryPanel({
         setNewCharacterLimit,
       );
     }
+    if (isExceededDecimalLimit) {
+      syncExceededDecimalLimitResolutionState(
+        currentValue,
+        setDecimalLimitResolution,
+        setNewDecimalLimit,
+        setManualNumericValue,
+      );
+    }
     setStagedDetailsExpanded(false);
     setPanelState("staged");
     onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
@@ -916,6 +1468,14 @@ export function SummaryPanel({
         setNewCharacterLimit,
       );
     }
+    if (isExceededDecimalLimit) {
+      syncExceededDecimalLimitResolutionState(
+        currentValue,
+        setDecimalLimitResolution,
+        setNewDecimalLimit,
+        setManualNumericValue,
+      );
+    }
     onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
   };
 
@@ -927,6 +1487,14 @@ export function SummaryPanel({
         currentValue,
         setCharacterLimitResolution,
         setNewCharacterLimit,
+      );
+    }
+    if (isExceededDecimalLimit) {
+      syncExceededDecimalLimitResolutionState(
+        currentValue,
+        setDecimalLimitResolution,
+        setNewDecimalLimit,
+        setManualNumericValue,
       );
     }
     setStagedDetailsExpanded(false);
@@ -943,6 +1511,14 @@ export function SummaryPanel({
         stagedValue,
         setCharacterLimitResolution,
         setNewCharacterLimit,
+      );
+    }
+    if (isExceededDecimalLimit) {
+      syncExceededDecimalLimitResolutionState(
+        stagedValue,
+        setDecimalLimitResolution,
+        setNewDecimalLimit,
+        setManualNumericValue,
       );
     }
     onPanelStateChange?.("staged", stagedValue, applyScope, selectedHoles);
@@ -1021,6 +1597,86 @@ export function SummaryPanel({
     </div>
   );
 
+  const renderDecimalLimitResolutionSection = () => (
+    <div className={styles.resolutionSection}>
+      <p className={styles.resolutionLabel}>Select resolution</p>
+      <div
+        className={styles.resolutionOptions}
+        role="radiogroup"
+        aria-label="Select resolution"
+      >
+        {DECIMAL_LIMIT_RESOLUTION_OPTIONS.map((option) => (
+          <Radio
+            key={option.value}
+            name="decimal-limit-resolution"
+            className={styles.resolutionRadio}
+            checked={decimalLimitResolution === option.value}
+            onCheckedChange={() => {
+              setDecimalLimitResolution(option.value);
+              if (option.value === "round-to-limit") {
+                setNewDecimalLimit("");
+              }
+              if (option.value !== "adjust-manually") {
+                setManualNumericValue("");
+              }
+            }}
+            disabled={isApproved}
+            label={option.label}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderNewDecimalLimitField = () => (
+    <div className={styles.characterLimitInputSection}>
+      <TextField
+        className={styles.characterLimitField}
+        label="New Decimal Limit"
+        placeholder=""
+        value={newDecimalLimit}
+        onChange={(event) => setNewDecimalLimit(event.target.value)}
+        disabled={isApproved}
+        aria-label="New decimal limit"
+      />
+      {showDecimalLimitRoundWarning && (
+        <div className={styles.characterLimitWarning} role="alert">
+          <p className={styles.characterLimitWarningText}>
+            {getDecimalLimitRoundWarningMessage(newDecimalLimit)}
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderManualNumericValueField = () => (
+    <TextField
+      className={styles.valueField}
+      label="Enter Value"
+      placeholder=""
+      value={manualNumericValue}
+      onChange={(event) => setManualNumericValue(event.target.value)}
+      disabled={isApproved}
+      error={showManualNumericInputError}
+      errorMessage={getNumericValidationErrorMessage(manualNumericValue, {
+        decimalMax,
+      })}
+      aria-label="Enter value"
+    />
+  );
+
+  const getNumericFieldLabel = () => {
+    if (errorType === "missing-value") {
+      return "Enter Value";
+    }
+
+    if (errorType === "invalid-value") {
+      return "Enter Replacement Value";
+    }
+
+    return "Enter Updated Value";
+  };
+
   const renderBooleanValueField = () => (
     <div className={styles.resolutionSection}>
       <p className={styles.resolutionLabel}>Choose a value</p>
@@ -1050,8 +1706,27 @@ export function SummaryPanel({
   );
 
   const renderValueField = () => {
-    if (isExceededLimit) {
+    if (isExceededLimit || isExceededDecimalLimit) {
       return null;
+    }
+
+    if (validationType === "numeric") {
+      return (
+        <TextField
+          className={styles.valueField}
+          label={getNumericFieldLabel()}
+          placeholder=""
+          value={textValue}
+          onChange={(event) => setTextValue(event.target.value)}
+          disabled={isApproved}
+          error={showNumericInputError}
+          errorMessage={getNumericValidationErrorMessage(
+            trimmedNumericValue,
+            numericValidationOptions,
+          )}
+          aria-label={getNumericFieldLabel()}
+        />
+      );
     }
 
     if (validationType === "text" && isTextValueRequired) {
@@ -1065,6 +1740,27 @@ export function SummaryPanel({
           maxLength={characterLimit}
           disabled={isApproved}
           aria-label="Enter value"
+        />
+      );
+    }
+
+    if (validationType === "date-time") {
+      return (
+        <TextField
+          className={styles.valueField}
+          label={
+            <>
+              Date Time{" "}
+              <span className={styles.dateFormatHint}>({dateTimeFormat})</span>
+            </>
+          }
+          placeholder=""
+          value={textValue}
+          onChange={(event) => setTextValue(event.target.value)}
+          disabled={isApproved}
+          error={showDateTimeFormatError}
+          errorMessage={getDateTimeFormatErrorMessage(dateTimeFormat)}
+          aria-label={`Date Time (${dateTimeFormat})`}
         />
       );
     }
@@ -1173,6 +1869,11 @@ export function SummaryPanel({
                       errorType,
                       characterLimit,
                       enteredCharacterCount,
+                      decimalMax,
+                      enteredDecimalCount,
+                      minValue,
+                      maxValue,
+                      invalidValue,
                     )}
                   </h2>
                   <button
@@ -1231,6 +1932,12 @@ export function SummaryPanel({
                 <>
                   {renderResolutionSection()}
                   {characterLimitResolution === "increase-limit" && renderNewCharacterLimitField()}
+                </>
+              ) : isExceededDecimalLimit ? (
+                <>
+                  {renderDecimalLimitResolutionSection()}
+                  {decimalLimitResolution === "increase-limit" && renderNewDecimalLimitField()}
+                  {decimalLimitResolution === "adjust-manually" && renderManualNumericValueField()}
                 </>
               ) : isBoolean ? (
                 renderBooleanValueField()
@@ -1331,46 +2038,3 @@ export function SummaryPanel({
     </aside>
   );
 }
-
-export type {
-  BooleanSummaryErrorType,
-  BooleanValueOption,
-  CharacterLimitResolution,
-  DateSummaryErrorType,
-  ListSummaryErrorType,
-  SummaryApplyScope,
-  SummaryErrorType,
-  SummaryPanelProps,
-  SummaryPanelState,
-  SummaryValidationType,
-  TextSummaryErrorType,
-} from "./SummaryPanel.types";
-export {
-  DEMO_BOOLEAN_CELL_COUNT,
-  DEMO_BOOLEAN_HOLE_COUNT,
-  DEMO_BOOLEAN_INITIAL_STAGED_VALUE,
-  DEMO_BOOLEAN_INVALID_VALUE,
-  DEMO_BOOLEAN_VALUE_OPTIONS,
-  DEMO_DATE_CELL_COUNT,
-  DEMO_DATE_FORMAT,
-  DEMO_DATE_HOLE_COUNT,
-  DEMO_DATE_INITIAL_STAGED_VALUE,
-  DEMO_DATE_INVALID_VALUE,
-  DEMO_CELL_COUNT,
-  DEMO_CHARACTER_LIMIT,
-  DEMO_DEFAULT_SELECTED_HOLES,
-  DEMO_ENTERED_CHARACTER_COUNT,
-  DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
-  DEMO_HOLE_COUNT,
-  DEMO_HOLE_OPTIONS,
-  DEMO_INVALID_VALUE,
-  DEMO_MAX_ENTERED_CHARACTER_COUNT_IN_SELECTION,
-  DEMO_MISSING_CELL_COUNT,
-  DEMO_MISSING_HOLE_COUNT,
-  DEMO_TEXT_CELL_COUNT,
-  DEMO_TEXT_HOLE_COUNT,
-  DEMO_TEXT_INITIAL_STAGED_VALUE,
-  DEMO_TEXT_INVALID_VALUE,
-  DEMO_VALUE_OPTIONS,
-  createGeologicalSummaryText,
-} from "./SummaryPanel.demoData";

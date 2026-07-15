@@ -88,8 +88,8 @@ export function HowToUsePage() {
             workflows — stage, update, approve — not just static UI.
           </li>
           <li>
-            Summary Panel has four gallery pages — list, text, boolean, and date
-            validation — each with its own error-type controls.
+            Summary Panel has five gallery pages — list, text, boolean, date, and
+            date/time validation — each with its own error-type controls.
           </li>
           <li>
             Interactive controls on a page (Reset, error-type switchers) are for
@@ -210,6 +210,40 @@ export function HowToUsePage() {
               <td>
                 <code>dateFormat</code> (from column schema),{" "}
                 <code>invalidValue</code>, counts
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>date-time</code>
+              </td>
+              <td>
+                <code>invalid-value</code>, <code>missing-value</code>
+              </td>
+              <td>
+                Text field labeled “Date Time” with required format in brackets;
+                invalid input shows field error
+              </td>
+              <td>
+                <code>dateTimeFormat</code> (from column schema),{" "}
+                <code>invalidValue</code>, counts
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>numeric</code>
+              </td>
+              <td>
+                <code>exceeded-decimal-limit</code>, <code>missing-value</code>,{" "}
+                <code>invalid-value</code>, <code>below-min-value</code>,{" "}
+                <code>above-max-value</code>
+              </td>
+              <td>
+                Round / increase decimal limit / manual value, or numeric text
+                field with validation
+              </td>
+              <td>
+                <code>decimalMax</code>, <code>minValue</code>,{" "}
+                <code>maxValue</code>, <code>invalidValue</code>, counts
               </td>
             </tr>
           </tbody>

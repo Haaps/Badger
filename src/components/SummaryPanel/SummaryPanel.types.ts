@@ -6,14 +6,22 @@ export type SummaryPanelState = "editable" | "staged" | "approved";
 export type SummaryApplyScope = "cell" | "holes";
 
 /** Column validation kind — drives resolution UI and error copy. */
-export type SummaryValidationType = "list" | "text" | "boolean" | "date";
+export type SummaryValidationType =
+  | "list"
+  | "text"
+  | "boolean"
+  | "date"
+  | "date-time"
+  | "numeric";
 
-/** List, boolean, and date columns share these error categories. */
+/** List, boolean, date, and date-time columns share these error categories. */
 export type ListSummaryErrorType = "invalid-value" | "missing-value";
 
 export type BooleanSummaryErrorType = ListSummaryErrorType;
 
 export type DateSummaryErrorType = ListSummaryErrorType;
+
+export type DateTimeSummaryErrorType = ListSummaryErrorType;
 
 export type BooleanValueOption = {
   value: string;
@@ -23,9 +31,24 @@ export type BooleanValueOption = {
 /** Text-only errors (character limit vs required empty cells). */
 export type TextSummaryErrorType = "exceeded-character-limit" | "value-required";
 
-export type SummaryErrorType = ListSummaryErrorType | TextSummaryErrorType;
+export type NumericSummaryErrorType =
+  | "exceeded-decimal-limit"
+  | "missing-value"
+  | "invalid-value"
+  | "below-min-value"
+  | "above-max-value";
+
+export type SummaryErrorType =
+  | ListSummaryErrorType
+  | TextSummaryErrorType
+  | NumericSummaryErrorType;
 
 export type CharacterLimitResolution = "trim-to-limit" | "increase-limit";
+
+export type DecimalLimitResolution =
+  | "round-to-limit"
+  | "increase-limit"
+  | "adjust-manually";
 
 export type SummaryApplyImpact = {
   rowCount: number;
@@ -60,6 +83,25 @@ export type SummaryPanelProps = {
   defaultCharacterLimitResolution?: CharacterLimitResolution;
   /** Initial new character limit when using increase-limit resolution. */
   defaultNewCharacterLimit?: string;
+  /** Configured decimal limit for exceeded-decimal-limit numeric errors. */
+  decimalMax?: number;
+  /** Current entered decimal count for exceeded-decimal-limit numeric errors. */
+  enteredDecimalCount?: number;
+  /** Configured minimum value for below-min-value numeric errors. */
+  minValue?: number;
+  /** Configured maximum value for above-max-value numeric errors. */
+  maxValue?: number;
+  /**
+   * Highest entered decimal count among cells in the selected drill holes.
+   * Used to warn when a manually increased decimal limit is still too low.
+   */
+  maxEnteredDecimalCountInSelection?: number;
+  /** Computes max entered decimal count for the selected drill holes. */
+  getMaxEnteredDecimalCountInSelection?: (selectedHoles: string[]) => number | null;
+  /** Initial resolution for exceeded-decimal-limit numeric errors. */
+  defaultDecimalLimitResolution?: DecimalLimitResolution;
+  /** Initial new decimal limit when using increase-limit resolution. */
+  defaultNewDecimalLimit?: string;
   /** Replacement value options for the single select. */
   valueOptions?: SelectMenuOption[];
   /** Replacement boolean value options shown as radio buttons. */
@@ -69,6 +111,11 @@ export type SummaryPanelProps = {
    * Defined by the platform column schema. The panel validates input against this format.
    */
   dateFormat?: string;
+  /**
+   * Required combined date/time format hint beside the Date Time field label
+   * (e.g. "yyyy/mm/dd hh:mm:ss"). Defined by the platform column schema.
+   */
+  dateTimeFormat?: string;
   /** Drill hole options for the multi select (when applying to holes). */
   holeOptions?: SelectMenuOption[];
   /** Initial selected drill hole IDs. */

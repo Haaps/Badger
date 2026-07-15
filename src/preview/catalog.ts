@@ -14,6 +14,8 @@ import {
   SummaryPanelTextPage,
   SummaryPanelBooleanPage,
   SummaryPanelDatePage,
+  SummaryPanelDateTimePage,
+  SummaryPanelNumericPage,
 } from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
 import { TextFieldPage } from "./pages/TextFieldPage";
@@ -121,6 +123,16 @@ export const componentCatalog: ComponentEntry[] = [
         path: "summary-panel/date-validation",
         label: "Date validation",
         Page: SummaryPanelDatePage,
+      },
+      {
+        path: "summary-panel/date-time-validation",
+        label: "Date/Time validation",
+        Page: SummaryPanelDateTimePage,
+      },
+      {
+        path: "summary-panel/numeric-validation",
+        label: "Numeric validation",
+        Page: SummaryPanelNumericPage,
       },
     ],
   },

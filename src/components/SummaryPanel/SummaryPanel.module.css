@@ -86,7 +86,7 @@
   margin: 0;
   font-family: var(--typography-font-family);
   font-size: var(--typography-xs-regular-font-size);
-  font-weight: 600;
+  font-weight: var(--typography-base-bold-font-weight);
   line-height: var(--typography-xs-regular-line-height);
   letter-spacing: var(--typography-xs-regular-letter-spacing);
   color: var(--neutral-500);
@@ -344,6 +344,13 @@
 .dateFormatHint {
   color: var(--neutral-300);
   font-weight: var(--typography-base-regular-font-weight);
+}
+
+.dateTimeFields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding-x-small);
+  width: 100%;
 }
 
 .characterLimitInputSection {
