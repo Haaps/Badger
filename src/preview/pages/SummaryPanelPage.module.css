@@ -44,7 +44,7 @@
 }
 
 .demoColumnWide {
-  max-width: 840px;
+  max-width: 1024px;
 }
 
 .demoColumnWide .errorTypeControl {
@@ -82,6 +82,15 @@
 
 .errorTypeControl {
   width: 100%;
+}
+
+.errorTypeSelect {
+  width: 100%;
+}
+
+.cellCountControl {
+  width: 100%;
+  max-width: 420px;
 }
 
 .hint {

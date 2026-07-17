@@ -233,13 +233,15 @@ export function HowToUsePage() {
                 <code>numeric</code>
               </td>
               <td>
-                <code>exceeded-decimal-limit</code>, <code>missing-value</code>,{" "}
+                <code>exceeded-decimal-limit</code>,{" "}
+                <code>exceeded-decimal-below-min</code>,{" "}
+                <code>exceeded-decimal-above-max</code>, <code>missing-value</code>,{" "}
                 <code>invalid-value</code>, <code>below-min-value</code>,{" "}
                 <code>above-max-value</code>
               </td>
               <td>
-                Round / increase decimal limit / manual value, or numeric text
-                field with validation
+                Round / increase decimal limit / manual value; dual errors also
+                support set-to-minimum or set-to-maximum
               </td>
               <td>
                 <code>decimalMax</code>, <code>minValue</code>,{" "}
