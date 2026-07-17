@@ -142,6 +142,12 @@
   white-space: nowrap;
 }
 
+.titleWrap {
+  flex: 1;
+  min-width: 0;
+  white-space: normal;
+}
+
 .titleError {
   color: var(--red-500);
 }

@@ -33,6 +33,8 @@ export type TextSummaryErrorType = "exceeded-character-limit" | "value-required"
 
 export type NumericSummaryErrorType =
   | "exceeded-decimal-limit"
+  | "exceeded-decimal-below-min"
+  | "exceeded-decimal-above-max"
   | "missing-value"
   | "invalid-value"
   | "below-min-value"
@@ -48,7 +50,9 @@ export type CharacterLimitResolution = "trim-to-limit" | "increase-limit";
 export type DecimalLimitResolution =
   | "round-to-limit"
   | "increase-limit"
-  | "adjust-manually";
+  | "adjust-manually"
+  | "set-to-minimum"
+  | "set-to-maximum";
 
 export type SummaryApplyImpact = {
   rowCount: number;

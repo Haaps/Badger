@@ -100,3 +100,14 @@ export function roundToDecimalLimit(value: string, decimalMax: number) {
   const rounded = Math.round(parsed * factor) / factor;
   return rounded.toFixed(decimalMax);
 }
+
+/** Formats a numeric bound to the column decimal limit (e.g. min 2 → "2.00"). */
+export function formatNumericToDecimalLimit(value: number | string, decimalMax: number) {
+  const parsed =
+    typeof value === "number" ? value : parseNumericValue(String(value).trim());
+  if (parsed === null || !Number.isFinite(parsed)) {
+    return String(value);
+  }
+
+  return parsed.toFixed(decimalMax);
+}

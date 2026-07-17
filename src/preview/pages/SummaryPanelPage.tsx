@@ -2,6 +2,8 @@ import { useState, type ReactNode } from "react";
 import { Button } from "../../components/Button";
 import { SegmentedControl } from "../../components/SegmentedControl";
 import type { SegmentedControlOption } from "../../components/SegmentedControl";
+import { SingleSelect } from "../../components/SingleSelect";
+import type { SelectMenuOption } from "../../components/SelectMenu";
 import {
   DEMO_CHARACTER_LIMIT,
   DEMO_DATE_FORMAT,
@@ -12,9 +14,10 @@ import {
   DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
   DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
   DEMO_NUMERIC_ABOVE_MAX_VALUE,
-  DEMO_NUMERIC_BELOW_MIN_SINGLE_CELL_COUNT,
   DEMO_NUMERIC_BELOW_MIN_VALUE,
   DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_BELOW_MIN_VALUE,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_VALUE,
   DEMO_NUMERIC_MAX_VALUE,
   DEMO_NUMERIC_MIN_VALUE,
   SummaryPanel,
@@ -27,6 +30,7 @@ import styles from "./SummaryPanelPage.module.css";
 type SummaryPanelDemoPageProps = {
   validationType: SummaryValidationType;
   errorTypeOptions?: SegmentedControlOption[];
+  errorTypeSelectOptions?: SelectMenuOption[];
   defaultErrorType?: SummaryErrorType;
   title: string;
   description: string;
@@ -38,9 +42,28 @@ type SummaryPanelDemoPageProps = {
   demoColumnClassName?: string;
 };
 
+function SummaryPanelCellCountControls({
+  cellCountMode,
+  onCellCountModeChange,
+}: {
+  cellCountMode: string;
+  onCellCountModeChange: (value: string) => void;
+}) {
+  return (
+    <SegmentedControl
+      className={styles.cellCountControl}
+      value={cellCountMode}
+      options={CELL_COUNT_MODE_OPTIONS}
+      onChange={onCellCountModeChange}
+      aria-label="Cell count variant"
+    />
+  );
+}
+
 function SummaryPanelDemoPage({
   validationType,
   errorTypeOptions = [{ value: "invalid-value", label: "Invalid value" }],
+  errorTypeSelectOptions,
   defaultErrorType = "invalid-value",
   title,
   description,
@@ -53,11 +76,18 @@ function SummaryPanelDemoPage({
 }: SummaryPanelDemoPageProps) {
   const [panelKey, setPanelKey] = useState(0);
   const [errorType, setErrorType] = useState<SummaryErrorType>(defaultErrorType);
-  const showErrorTypeControl = errorTypeOptions.length > 1;
+  const [cellCountMode, setCellCountMode] = useState("multiple");
+  const demoCellCount = cellCountMode === "single" ? 1 : undefined;
+  const showSegmentedErrorTypeControl =
+    !errorTypeSelectOptions && errorTypeOptions.length > 1;
+  const showSelectErrorTypeControl =
+    errorTypeSelectOptions !== undefined && errorTypeSelectOptions.length > 0;
 
   const handleReset = () => {
     setPanelKey((current) => current + 1);
   };
+
+  const panelPropsFromDemo = getPanelProps?.(errorType) ?? {};
 
   return (
     <div className={styles.page}>
@@ -79,7 +109,7 @@ function SummaryPanelDemoPage({
                 </Button>
               </div>
 
-              {showErrorTypeControl && (
+              {showSegmentedErrorTypeControl && (
                 <SegmentedControl
                   className={styles.errorTypeControl}
                   value={errorType}
@@ -89,11 +119,28 @@ function SummaryPanelDemoPage({
                 />
               )}
 
+              {showSelectErrorTypeControl && (
+                <SingleSelect
+                  className={styles.errorTypeSelect}
+                  label="Validation scenario"
+                  value={errorType}
+                  options={errorTypeSelectOptions}
+                  onChange={(value) => setErrorType(value as SummaryErrorType)}
+                  placeholder="Select a scenario"
+                  aria-label="Validation scenario"
+                />
+              )}
+
               {renderExtraControls?.(errorType)}
+
+              <SummaryPanelCellCountControls
+                cellCountMode={cellCountMode}
+                onCellCountModeChange={setCellCountMode}
+              />
             </div>
 
             <SummaryPanel
-              key={`${panelKey}-${errorType}-${extraPanelKey}`}
+              key={`${panelKey}-${errorType}-${extraPanelKey}-${cellCountMode}`}
               validationType={validationType}
               errorType={errorType}
               {...(validationType === "text"
@@ -107,7 +154,8 @@ function SummaryPanelDemoPage({
                   : validationType === "date-time"
                     ? { dateTimeFormat: DEMO_DATE_TIME_FORMAT }
                     : {})}
-              {...(getPanelProps?.(errorType) ?? {})}
+              {...panelPropsFromDemo}
+              {...(demoCellCount !== undefined ? { cellCount: demoCellCount } : {})}
               defaultCollapsed={false}
               panelHeight={panelHeight}
               onClose={() => undefined}
@@ -140,18 +188,23 @@ const TEXT_ERROR_TYPE_OPTIONS: SegmentedControlOption[] = [
   { value: "value-required", label: "Value Required" },
 ];
 
-const NUMERIC_ERROR_TYPE_OPTIONS: SegmentedControlOption[] = [
+const NUMERIC_ERROR_TYPE_SELECT_OPTIONS: SelectMenuOption[] = [
   { value: "exceeded-decimal-limit", label: "Exceeded decimal limit" },
+  { value: "exceeded-decimal-below-min", label: "Exceeded decimal limit and below min" },
+  { value: "exceeded-decimal-above-max", label: "Exceeded decimal limit and above max" },
   { value: "missing-value", label: "Missing value" },
   { value: "invalid-value", label: "Invalid value" },
   { value: "below-min-value", label: "Below min value" },
   { value: "above-max-value", label: "Above max value" },
 ];
 
-const BELOW_MIN_CELL_COUNT_OPTIONS: SegmentedControlOption[] = [
+const CELL_COUNT_MODE_OPTIONS: SegmentedControlOption[] = [
   { value: "multiple", label: "Multiple cells" },
   { value: "single", label: "Single cell" },
 ];
+
+const CELL_COUNT_HINT =
+  "Switch between Multiple cells and Single cell to preview plural and singular summary copy. Single cell disables Apply to drill holes.";
 
 const SHARED_HINTS = [
   "Select or enter a value — Stage Change enables.",
@@ -170,6 +223,7 @@ export function SummaryPanelListPage() {
       description="Summary panel for list validation errors. Switch between invalid and missing value error types, then pick an existing list value or add a new one before staging and approving."
       hints={[
         "Use the error type control to switch between Invalid value and Missing value.",
+        CELL_COUNT_HINT,
         "Select a list value — Stage Change enables.",
         "Click Add new value to type a custom value, or Choose existing value to switch back.",
         ...SHARED_HINTS.slice(1),
@@ -188,6 +242,7 @@ export function SummaryPanelTextPage() {
       description="Summary panel for text validation errors. Switch between exceeded character limit and value required error types, then choose a resolution or enter a corrected value before staging and approving."
       hints={[
         "Use the error type control to switch between Exceeded character limit and Value Required.",
+        CELL_COUNT_HINT,
         "For exceeded character limit, choose Trim to existing character limit or Increase character limit manually.",
         "When increasing the limit manually, enter a new character limit — Stage Change enables.",
         "With Apply to drill holes selected, a warning appears if the new limit is still below some selected cell lengths.",
@@ -208,6 +263,7 @@ export function SummaryPanelBooleanPage() {
       panelHeight={824}
       hints={[
         "Use the error type control to switch between Invalid value and Missing value.",
+        CELL_COUNT_HINT,
         "Choose True or False — Stage Change enables.",
         "Switch to Apply to drill holes — the hole multi-select fills the remaining space and scrolls.",
         "Click the SUMMARY bar to collapse and expand the panel.",
@@ -228,6 +284,7 @@ export function SummaryPanelDatePage() {
       panelHeight={824}
       hints={[
         "Use the error type control to switch between Invalid value and Missing value.",
+        CELL_COUNT_HINT,
         "Enter a date in the required format — Stage Change enables when the value is valid.",
         "Invalid dates show a field error and keep Stage Change disabled.",
         "The format hint beside the Date label comes from your column schema (demo: yyyy/mm/dd).",
@@ -250,6 +307,7 @@ export function SummaryPanelDateTimePage() {
       panelHeight={824}
       hints={[
         "Use the error type control to switch between Invalid value and Missing value.",
+        CELL_COUNT_HINT,
         "Enter a date and time in the required format — Stage Change enables when the value is valid.",
         "Invalid values show a field error and keep Stage Change disabled.",
         "The format hint beside the Date Time label comes from your column schema (demo: yyyy/mm/dd hh:mm:ss).",
@@ -262,35 +320,14 @@ export function SummaryPanelDateTimePage() {
   );
 }
 
-function SummaryPanelNumericBelowMinControls({
-  belowMinCellCountMode,
-  onBelowMinCellCountModeChange,
-}: {
-  belowMinCellCountMode: string;
-  onBelowMinCellCountModeChange: (value: string) => void;
-}) {
-  return (
-    <SegmentedControl
-      className={styles.errorTypeControl}
-      value={belowMinCellCountMode}
-      options={BELOW_MIN_CELL_COUNT_OPTIONS}
-      onChange={onBelowMinCellCountModeChange}
-      aria-label="Below min value cell count"
-    />
-  );
-}
-
 export function SummaryPanelNumericPage() {
-  const [belowMinCellCountMode, setBelowMinCellCountMode] = useState("multiple");
-
   return (
     <SummaryPanelDemoPage
       validationType="numeric"
-      errorTypeOptions={NUMERIC_ERROR_TYPE_OPTIONS}
+      errorTypeSelectOptions={NUMERIC_ERROR_TYPE_SELECT_OPTIONS}
       defaultErrorType="exceeded-decimal-limit"
-      demoColumnClassName={styles.demoColumnWide}
       title="Numeric validation"
-      description="Summary panel for numeric validation errors. Switch between exceeded decimal limit, missing value, invalid value, below min, and above max error types, then choose a resolution or enter a corrected value before staging and approving."
+      description="Summary panel for numeric validation errors. Choose a validation scenario, then choose a resolution or enter a corrected value before staging and approving."
       panelHeight={880}
       getPanelProps={(errorType) => {
         const shared = { decimalMax: DEMO_DECIMAL_MAX };
@@ -304,15 +341,31 @@ export function SummaryPanelNumericPage() {
           };
         }
 
+        if (errorType === "exceeded-decimal-below-min") {
+          return {
+            ...shared,
+            enteredDecimalCount: DEMO_ENTERED_DECIMAL_COUNT,
+            invalidValue: DEMO_NUMERIC_EXCEEDED_DECIMAL_BELOW_MIN_VALUE,
+            minValue: DEMO_NUMERIC_MIN_VALUE,
+            maxEnteredDecimalCountInSelection: DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
+          };
+        }
+
+        if (errorType === "exceeded-decimal-above-max") {
+          return {
+            ...shared,
+            enteredDecimalCount: DEMO_ENTERED_DECIMAL_COUNT,
+            invalidValue: DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_VALUE,
+            maxValue: DEMO_NUMERIC_MAX_VALUE,
+            maxEnteredDecimalCountInSelection: DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
+          };
+        }
+
         if (errorType === "below-min-value") {
           return {
             ...shared,
             invalidValue: DEMO_NUMERIC_BELOW_MIN_VALUE,
             minValue: DEMO_NUMERIC_MIN_VALUE,
-            cellCount:
-              belowMinCellCountMode === "single"
-                ? DEMO_NUMERIC_BELOW_MIN_SINGLE_CELL_COUNT
-                : undefined,
           };
         }
 
@@ -326,21 +379,13 @@ export function SummaryPanelNumericPage() {
 
         return shared;
       }}
-      extraPanelKey={belowMinCellCountMode}
-      renderExtraControls={(errorType) =>
-        errorType === "below-min-value" ? (
-          <SummaryPanelNumericBelowMinControls
-            belowMinCellCountMode={belowMinCellCountMode}
-            onBelowMinCellCountModeChange={setBelowMinCellCountMode}
-          />
-        ) : null
-      }
       hints={[
-        "Use the error type control to switch between all five numeric error types.",
-        "For exceeded decimal limit, choose Round, Increase max decimal limit, or Adjust value manually.",
+        "Use the validation scenario dropdown to switch between all seven numeric error types.",
+        CELL_COUNT_HINT,
+        "For exceeded decimal limit (including decimal + min/max combinations), choose a resolution that fixes both errors.",
+        "Dual-error scenarios offer Set to minimum/maximum value or adjust manually; increasing the decimal limit alone cannot resolve min/max violations.",
         "When increasing the decimal limit, enter a new limit — Stage Change enables when valid.",
         "With Apply to drill holes selected, a warning appears if the new limit is still below some selected cell decimal counts.",
-        "For below min value, switch between Multiple cells and Single cell to see both description variants.",
         "Enter a valid numeric value — Stage Change enables when input passes validation.",
         "All numeric entry fields enforce the column decimal limit (demo: 2 decimal places).",
         ...SHARED_HINTS.slice(1),

@@ -83,6 +83,10 @@ export const DEMO_NUMERIC_INVALID_VALUE = "abc";
 export const DEMO_NUMERIC_BELOW_MIN_VALUE = "1.5";
 export const DEMO_NUMERIC_ABOVE_MAX_VALUE = "99.9";
 export const DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE = "12.3456";
+/** Value that exceeds decimal max and is below min (demo min: 2, decimal max: 2). */
+export const DEMO_NUMERIC_EXCEEDED_DECIMAL_BELOW_MIN_VALUE = "1.2345";
+/** Value that exceeds decimal max and is above max (demo max: 50, decimal max: 2). */
+export const DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_VALUE = "55.1234";
 /** Column schema allows at most this many decimal places. */
 export const DEMO_DECIMAL_MAX = 2;
 /** Decimal places in the invalid cell value (must exceed DEMO_DECIMAL_MAX). */
@@ -97,6 +101,8 @@ export const DEMO_NUMERIC_BELOW_MIN_CELL_COUNT = 4;
 export const DEMO_NUMERIC_BELOW_MIN_SINGLE_CELL_COUNT = 1;
 export const DEMO_NUMERIC_ABOVE_MAX_CELL_COUNT = 6;
 export const DEMO_NUMERIC_EXCEEDED_DECIMAL_CELL_COUNT = 7;
+export const DEMO_NUMERIC_EXCEEDED_DECIMAL_BELOW_MIN_CELL_COUNT = 3;
+export const DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_CELL_COUNT = 5;
 export const DEMO_NUMERIC_INITIAL_STAGED_VALUE = "12.35";
 export const DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION = 6;
 export const DEMO_DEFAULT_NEW_DECIMAL_LIMIT = "4";
