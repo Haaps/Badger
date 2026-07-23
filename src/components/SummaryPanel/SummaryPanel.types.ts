@@ -50,9 +50,7 @@ export type CharacterLimitResolution = "trim-to-limit" | "increase-limit";
 export type DecimalLimitResolution =
   | "round-to-limit"
   | "increase-limit"
-  | "adjust-manually"
-  | "set-to-minimum"
-  | "set-to-maximum";
+  | "adjust-manually";
 
 export type SummaryApplyImpact = {
   rowCount: number;

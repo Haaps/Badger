@@ -391,8 +391,8 @@ export function SummaryPanelNumericPage() {
       hints={[
         "Use the validation scenario dropdown to switch between all seven numeric error types.",
         CELL_COUNT_HINT,
-        "For exceeded decimal limit (including decimal + min/max combinations), choose a resolution that fixes both errors.",
-        "Dual-error scenarios offer Set to minimum/maximum value or adjust manually; increasing the decimal limit alone cannot resolve min/max violations.",
+        "For exceeded decimal limit, choose Round to current decimal limit, Increase max decimal limit, or Adjust value manually.",
+        "Dual-error scenarios (decimal limit + min/max) use a single Enter Updated Value field validated against all constraints.",
         "When increasing the decimal limit, enter a new limit — Stage Change enables when valid.",
         "With Apply to drill holes selected, a warning appears if the new limit is still below some selected cell decimal counts.",
         "Enter a valid numeric value — Stage Change enables when input passes validation.",

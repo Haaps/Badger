@@ -25,12 +25,10 @@ import {
   isValidDateTimeForFormat,
 } from "./dateFormatValidation";
 import {
-  formatNumericToDecimalLimit,
   getNumericValidationErrorMessage,
   isValidNumericValue,
   parseNewDecimalLimitValue,
   roundToDecimalLimit,
-  type NumericValidationOptions,
 } from "./numericValidation";
 import {
   DEMO_BOOLEAN_CELL_COUNT,
@@ -119,24 +117,6 @@ const CHARACTER_LIMIT_RESOLUTION_OPTIONS = [
 
 const DECIMAL_LIMIT_RESOLUTION_OPTIONS = [
   { value: "round-to-limit", label: "Round to current decimal limit" },
-  { value: "increase-limit", label: "Increase max decimal limit" },
-  { value: "adjust-manually", label: "Adjust value manually" },
-] as const satisfies ReadonlyArray<{
-  value: DecimalLimitResolution;
-  label: string;
-}>;
-
-const DECIMAL_BELOW_MIN_RESOLUTION_OPTIONS = [
-  { value: "set-to-minimum", label: "Set to minimum value" },
-  { value: "increase-limit", label: "Increase max decimal limit" },
-  { value: "adjust-manually", label: "Adjust value manually" },
-] as const satisfies ReadonlyArray<{
-  value: DecimalLimitResolution;
-  label: string;
-}>;
-
-const DECIMAL_ABOVE_MAX_RESOLUTION_OPTIONS = [
-  { value: "set-to-maximum", label: "Set to maximum value" },
   { value: "increase-limit", label: "Increase max decimal limit" },
   { value: "adjust-manually", label: "Adjust value manually" },
 ] as const satisfies ReadonlyArray<{
@@ -277,46 +257,18 @@ function isExceededCharacterLimitError(
   return validationType === "text" && errorType === "exceeded-character-limit";
 }
 
-function isNumericDualError(errorType: SummaryErrorType) {
-  return (
-    errorType === "exceeded-decimal-below-min" || errorType === "exceeded-decimal-above-max"
-  );
-}
-
-function getDecimalLimitResolutionOptions(errorType: SummaryErrorType) {
-  if (errorType === "exceeded-decimal-below-min") {
-    return DECIMAL_BELOW_MIN_RESOLUTION_OPTIONS;
-  }
-
-  if (errorType === "exceeded-decimal-above-max") {
-    return DECIMAL_ABOVE_MAX_RESOLUTION_OPTIONS;
-  }
-
-  return DECIMAL_LIMIT_RESOLUTION_OPTIONS;
-}
-
-function getDefaultDecimalLimitResolution(errorType: SummaryErrorType): DecimalLimitResolution {
-  if (errorType === "exceeded-decimal-below-min") {
-    return "set-to-minimum";
-  }
-
-  if (errorType === "exceeded-decimal-above-max") {
-    return "set-to-maximum";
-  }
-
-  return "round-to-limit";
+function isNumericDecimalLimitOnlyError(
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+) {
+  return validationType === "numeric" && errorType === "exceeded-decimal-limit";
 }
 
 function isNumericDecimalLimitResolutionError(
   validationType: SummaryValidationType,
   errorType: SummaryErrorType,
 ) {
-  return (
-    validationType === "numeric" &&
-    (errorType === "exceeded-decimal-limit" ||
-      errorType === "exceeded-decimal-below-min" ||
-      errorType === "exceeded-decimal-above-max")
-  );
+  return isNumericDecimalLimitOnlyError(validationType, errorType);
 }
 
 function isNumericMissingValueError(
@@ -560,17 +512,13 @@ function getCharacterLimitTrimWarningMessage(newLimit: string) {
 }
 
 // Decimal-limit fixes encode resolution in the staged value string:
-// "round-to-limit", "set-to-minimum", "set-to-maximum", "increase-limit:{digits}", or a manual numeric value.
+// "round-to-limit", "increase-limit:{digits}", or a manual numeric value.
 function getExceededDecimalLimitStagedValue(
   resolution: DecimalLimitResolution,
   newLimit: string,
   manualValue: string,
 ) {
-  if (
-    resolution === "round-to-limit" ||
-    resolution === "set-to-minimum" ||
-    resolution === "set-to-maximum"
-  ) {
+  if (resolution === "round-to-limit") {
     return resolution;
   }
 
@@ -594,11 +542,7 @@ function parseExceededDecimalLimitStagedValue(value: string): {
     };
   }
 
-  if (
-    value === "round-to-limit" ||
-    value === "set-to-minimum" ||
-    value === "set-to-maximum"
-  ) {
+  if (value === "round-to-limit") {
     return {
       resolution: value,
       newLimit: "",
@@ -618,19 +562,9 @@ function getExceededDecimalLimitResultFromResolution(
   resolutionInput: string,
   decimalMax: number,
   originalValue: string,
-  minValue: number,
-  maxValue: number,
 ) {
   if (resolution === "round-to-limit") {
     return roundToDecimalLimit(originalValue, decimalMax);
-  }
-
-  if (resolution === "set-to-minimum") {
-    return formatNumericToDecimalLimit(minValue, decimalMax);
-  }
-
-  if (resolution === "set-to-maximum") {
-    return formatNumericToDecimalLimit(maxValue, decimalMax);
   }
 
   if (resolution === "increase-limit") {
@@ -649,8 +583,6 @@ function getExceededDecimalLimitResultText(
   resolutionValue: string,
   decimalMax: number,
   originalValue: string,
-  minValue: number,
-  maxValue: number,
 ) {
   const parsed = parseExceededDecimalLimitStagedValue(resolutionValue);
 
@@ -659,8 +591,6 @@ function getExceededDecimalLimitResultText(
     parsed.resolution === "adjust-manually" ? parsed.manualValue : parsed.newLimit,
     decimalMax,
     originalValue,
-    minValue,
-    maxValue,
   );
 }
 
@@ -671,8 +601,6 @@ function getExceededDecimalLimitPreviewDisplayText(
   decimalMax: number,
   originalValue: string,
   committedStagedValue: string,
-  minValue: number,
-  maxValue: number,
 ) {
   if (
     resolution === "increase-limit" &&
@@ -682,8 +610,6 @@ function getExceededDecimalLimitPreviewDisplayText(
       committedStagedValue,
       decimalMax,
       originalValue,
-      minValue,
-      maxValue,
     );
   }
 
@@ -692,8 +618,6 @@ function getExceededDecimalLimitPreviewDisplayText(
     resolution === "adjust-manually" ? manualValue : newLimit,
     decimalMax,
     originalValue,
-    minValue,
-    maxValue,
   );
 }
 
@@ -707,16 +631,12 @@ function getExceededDecimalLimitStagedAsDisplayText(
   manualValue: string,
   decimalMax: number,
   originalValue: string,
-  minValue: number,
-  maxValue: number,
 ) {
   if (isApproved || (isStaged && !hasStagedChanges)) {
     return getExceededDecimalLimitResultText(
       stagedValue,
       decimalMax,
       originalValue,
-      minValue,
-      maxValue,
     );
   }
 
@@ -728,8 +648,6 @@ function getExceededDecimalLimitStagedAsDisplayText(
       decimalMax,
       originalValue,
       stagedValue,
-      minValue,
-      maxValue,
     );
   }
 
@@ -748,64 +666,21 @@ function syncExceededDecimalLimitResolutionState(
   setManualValue(parsed.manualValue);
 }
 
-function getManualDecimalLimitValidationOptions(
-  errorType: SummaryErrorType,
-  minValue: number,
-  maxValue: number,
-  decimalMax: number,
-): NumericValidationOptions {
-  const options: NumericValidationOptions = { decimalMax };
-
-  if (errorType === "exceeded-decimal-below-min") {
-    options.minValue = minValue;
-  }
-
-  if (errorType === "exceeded-decimal-above-max") {
-    options.maxValue = maxValue;
-  }
-
-  return options;
-}
-
 function canCommitExceededDecimalLimitResolution(
   resolution: DecimalLimitResolution,
   newLimit: string,
   manualValue: string,
-  manualValidationOptions: NumericValidationOptions,
-  errorType: SummaryErrorType,
+  decimalMax: number,
 ) {
-  if (
-    resolution === "round-to-limit" ||
-    resolution === "set-to-minimum" ||
-    resolution === "set-to-maximum"
-  ) {
+  if (resolution === "round-to-limit") {
     return true;
   }
 
   if (resolution === "increase-limit") {
-    if (parseNewDecimalLimitValue(newLimit) === null) {
-      return false;
-    }
-
-    return !isNumericDualError(errorType);
+    return parseNewDecimalLimitValue(newLimit) !== null;
   }
 
-  return isValidNumericValue(manualValue, manualValidationOptions);
-}
-
-function shouldShowDualErrorIncreaseLimitWarning(
-  errorType: SummaryErrorType,
-  resolution: DecimalLimitResolution,
-) {
-  return isNumericDualError(errorType) && resolution === "increase-limit";
-}
-
-function getDualErrorIncreaseLimitWarningMessage(errorType: SummaryErrorType) {
-  if (errorType === "exceeded-decimal-below-min") {
-    return "Increasing the decimal limit alone will not resolve minimum value violations. Choose Set to minimum value or adjust manually to fix both errors.";
-  }
-
-  return "Increasing the decimal limit alone will not resolve maximum value violations. Choose Set to maximum value or adjust manually to fix both errors.";
+  return isValidNumericValue(manualValue, { decimalMax });
 }
 
 function resolveMaxEnteredDecimalCountInSelection(
@@ -877,11 +752,11 @@ function getNumericInputValidationOptions(
 
   const options = { decimalMax };
 
-  if (errorType === "below-min-value") {
+  if (errorType === "below-min-value" || errorType === "exceeded-decimal-below-min") {
     return { ...options, minValue };
   }
 
-  if (errorType === "above-max-value") {
+  if (errorType === "above-max-value" || errorType === "exceeded-decimal-above-max") {
     return { ...options, maxValue };
   }
 
@@ -1310,7 +1185,7 @@ export function SummaryPanel({
   const minValue = minValueProp ?? DEMO_NUMERIC_MIN_VALUE;
   const maxValue = maxValueProp ?? DEMO_NUMERIC_MAX_VALUE;
   const resolvedDefaultDecimalLimitResolution =
-    defaultDecimalLimitResolutionProp ?? getDefaultDecimalLimitResolution(errorType);
+    defaultDecimalLimitResolutionProp ?? "round-to-limit";
   const originalExceededLimitTextRef = useRef(
     getOriginalExceededLimitCellText(
       exceededLimitCellTextProp,
@@ -1481,12 +1356,6 @@ export function SummaryPanel({
     maxValue,
     decimalMax,
   );
-  const manualDecimalLimitValidationOptions = getManualDecimalLimitValidationOptions(
-    errorType,
-    minValue,
-    maxValue,
-    decimalMax,
-  );
   const trimmedNumericValue = isNumeric ? textValue.trim() : "";
   const trimmedManualNumericValue = manualNumericValue.trim();
   const showNumericInputError =
@@ -1498,7 +1367,7 @@ export function SummaryPanel({
     isNumericDecimalLimitResolution &&
     decimalLimitResolution === "adjust-manually" &&
     trimmedManualNumericValue !== "" &&
-    !isValidNumericValue(trimmedManualNumericValue, manualDecimalLimitValidationOptions);
+    !isValidNumericValue(trimmedManualNumericValue, { decimalMax });
   const isNumericValueCommittable =
     !isNumeric ||
     isNumericDecimalLimitResolution ||
@@ -1548,8 +1417,7 @@ export function SummaryPanel({
             decimalLimitResolution,
             newDecimalLimit,
             manualNumericValue,
-            manualDecimalLimitValidationOptions,
-            errorType,
+            decimalMax,
           )
         : isDateTime
           ? isDateTimeValueCommittable
@@ -1568,8 +1436,7 @@ export function SummaryPanel({
             decimalLimitResolution,
             newDecimalLimit,
             manualNumericValue,
-            manualDecimalLimitValidationOptions,
-            errorType,
+            decimalMax,
           )
         : isDateTime
           ? isDateTimeValueCommittable
@@ -1602,8 +1469,6 @@ export function SummaryPanel({
           manualNumericValue,
           decimalMax,
           invalidValue,
-          minValue,
-          maxValue,
         )
       : isBoolean
         ? resolveBooleanDisplayValue(stagedValue, booleanValueOptions)
@@ -1647,11 +1512,6 @@ export function SummaryPanel({
       maxEnteredDecimalCountInSelectionProp,
       getMaxEnteredDecimalCountInSelection,
     );
-
-  const showDualErrorIncreaseLimitWarning =
-    isNumericDecimalLimitResolution &&
-    !isApproved &&
-    shouldShowDualErrorIncreaseLimitWarning(errorType, decimalLimitResolution);
 
   const segmentedOptions = useMemo(() => {
     if (isApproved) {
@@ -1871,7 +1731,7 @@ export function SummaryPanel({
         role="radiogroup"
         aria-label="Select resolution"
       >
-        {getDecimalLimitResolutionOptions(errorType).map((option) => (
+        {DECIMAL_LIMIT_RESOLUTION_OPTIONS.map((option) => (
           <Radio
             key={option.value}
             name="decimal-limit-resolution"
@@ -1879,11 +1739,7 @@ export function SummaryPanel({
             checked={decimalLimitResolution === option.value}
             onCheckedChange={() => {
               setDecimalLimitResolution(option.value);
-              if (
-                option.value === "round-to-limit" ||
-                option.value === "set-to-minimum" ||
-                option.value === "set-to-maximum"
-              ) {
+              if (option.value === "round-to-limit") {
                 setNewDecimalLimit("");
               }
               if (option.value !== "adjust-manually") {
@@ -1909,13 +1765,6 @@ export function SummaryPanel({
         disabled={isApproved}
         aria-label="New decimal limit"
       />
-      {showDualErrorIncreaseLimitWarning && (
-        <div className={styles.characterLimitWarning} role="alert">
-          <p className={styles.characterLimitWarningText}>
-            {getDualErrorIncreaseLimitWarningMessage(errorType)}
-          </p>
-        </div>
-      )}
       {showDecimalLimitRoundWarning && (
         <div className={styles.characterLimitWarning} role="alert">
           <p className={styles.characterLimitWarningText}>
@@ -1935,10 +1784,7 @@ export function SummaryPanel({
       onChange={(event) => setManualNumericValue(event.target.value)}
       disabled={isApproved}
       error={showManualNumericInputError}
-      errorMessage={getNumericValidationErrorMessage(
-        manualNumericValue,
-        manualDecimalLimitValidationOptions,
-      )}
+      errorMessage={getNumericValidationErrorMessage(manualNumericValue, { decimalMax })}
       aria-label="Enter value"
     />
   );
