@@ -88,8 +88,9 @@ export function HowToUsePage() {
             workflows — stage, update, approve — not just static UI.
           </li>
           <li>
-            Summary Panel has five gallery pages — list, text, boolean, date, and
-            date/time validation — each with its own error-type controls.
+            Summary Panel has six gallery pages — list, text, boolean, date,
+            date/time, numeric, and gaps — each with its own error-type controls
+            where applicable.
           </li>
           <li>
             Interactive controls on a page (Reset, error-type switchers) are for
@@ -246,6 +247,22 @@ export function HowToUsePage() {
               <td>
                 <code>decimalMax</code>, <code>minValue</code>,{" "}
                 <code>maxValue</code>, <code>invalidValue</code>, counts
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>gaps</code>
+              </td>
+              <td>
+                <code>gaps-not-allowed</code>
+              </td>
+              <td>
+                To and From fields with current gap banner; pass column header
+                labels via <code>toLabel</code> and <code>fromLabel</code>
+              </td>
+              <td>
+                <code>toValue</code>, <code>fromValue</code>,{" "}
+                <code>toLabel</code>, <code>fromLabel</code>
               </td>
             </tr>
           </tbody>

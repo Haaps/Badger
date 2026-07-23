@@ -6,6 +6,7 @@ export type {
   DateSummaryErrorType,
   DateTimeSummaryErrorType,
   DecimalLimitResolution,
+  GapsSummaryErrorType,
   ListSummaryErrorType,
   NumericSummaryErrorType,
   SummaryApplyScope,
@@ -30,6 +31,17 @@ export {
   roundToDecimalLimit,
 } from "./numericValidation";
 export {
+  computeGapsGap,
+  formatGapsGap,
+  formatGapsValuesSummary,
+  getGapsFieldErrorMessage,
+  getGapsStagedValue,
+  getGapsSummaryMessage,
+  isValidGapsResolution,
+  isValidGapsValue,
+  parseGapsStagedValue,
+} from "./gapsValidation";
+export {
   DEMO_BOOLEAN_CELL_COUNT,
   DEMO_BOOLEAN_HOLE_COUNT,
   DEMO_BOOLEAN_INITIAL_STAGED_VALUE,
@@ -53,6 +65,12 @@ export {
   DEMO_ENTERED_CHARACTER_COUNT,
   DEMO_ENTERED_DECIMAL_COUNT,
   DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
+  DEMO_GAPS_CELL_COUNT,
+  DEMO_GAPS_FROM_LABEL,
+  DEMO_GAPS_FROM_VALUE,
+  DEMO_GAPS_HOLE_COUNT,
+  DEMO_GAPS_TO_LABEL,
+  DEMO_GAPS_TO_VALUE,
   DEMO_HOLE_COUNT,
   DEMO_HOLE_OPTIONS,
   DEMO_INVALID_VALUE,

@@ -78,6 +78,7 @@ function SummaryPanelDemoPage({
   const [errorType, setErrorType] = useState<SummaryErrorType>(defaultErrorType);
   const [cellCountMode, setCellCountMode] = useState("multiple");
   const demoCellCount = cellCountMode === "single" ? 1 : undefined;
+  const showCellCountControl = validationType !== "gaps";
   const showSegmentedErrorTypeControl =
     !errorTypeSelectOptions && errorTypeOptions.length > 1;
   const showSelectErrorTypeControl =
@@ -133,10 +134,12 @@ function SummaryPanelDemoPage({
 
               {renderExtraControls?.(errorType)}
 
-              <SummaryPanelCellCountControls
-                cellCountMode={cellCountMode}
-                onCellCountModeChange={setCellCountMode}
-              />
+              {showCellCountControl && (
+                <SummaryPanelCellCountControls
+                  cellCountMode={cellCountMode}
+                  onCellCountModeChange={setCellCountMode}
+                />
+              )}
             </div>
 
             <SummaryPanel
@@ -219,7 +222,7 @@ export function SummaryPanelListPage() {
     <SummaryPanelDemoPage
       validationType="list"
       errorTypeOptions={LIST_ERROR_TYPE_OPTIONS}
-      title="List validation"
+      title="List"
       description="Summary panel for list validation errors. Switch between invalid and missing value error types, then pick an existing list value or add a new one before staging and approving."
       hints={[
         "Use the error type control to switch between Invalid value and Missing value.",
@@ -238,7 +241,7 @@ export function SummaryPanelTextPage() {
       validationType="text"
       errorTypeOptions={TEXT_ERROR_TYPE_OPTIONS}
       defaultErrorType="exceeded-character-limit"
-      title="Text validation"
+      title="Text"
       description="Summary panel for text validation errors. Switch between exceeded character limit and value required error types, then choose a resolution or enter a corrected value before staging and approving."
       hints={[
         "Use the error type control to switch between Exceeded character limit and Value Required.",
@@ -258,7 +261,7 @@ export function SummaryPanelBooleanPage() {
     <SummaryPanelDemoPage
       validationType="boolean"
       errorTypeOptions={LIST_ERROR_TYPE_OPTIONS}
-      title="Boolean validation"
+      title="Boolean"
       description="Summary panel for boolean validation errors. Switch between invalid and missing value error types, then choose True or False before staging and approving."
       panelHeight={824}
       hints={[
@@ -279,7 +282,7 @@ export function SummaryPanelDatePage() {
     <SummaryPanelDemoPage
       validationType="date"
       errorTypeOptions={LIST_ERROR_TYPE_OPTIONS}
-      title="Date validation"
+      title="Date"
       description="Summary panel for date validation errors. Switch between invalid and missing value error types, then enter a date in the required format before staging and approving."
       panelHeight={824}
       hints={[
@@ -302,7 +305,7 @@ export function SummaryPanelDateTimePage() {
     <SummaryPanelDemoPage
       validationType="date-time"
       errorTypeOptions={LIST_ERROR_TYPE_OPTIONS}
-      title="Date/Time validation"
+      title="Date/Time"
       description="Summary panel for date/time validation errors. Switch between invalid and missing value error types, then enter a date and time in the required format before staging and approving."
       panelHeight={824}
       hints={[
@@ -326,7 +329,7 @@ export function SummaryPanelNumericPage() {
       validationType="numeric"
       errorTypeSelectOptions={NUMERIC_ERROR_TYPE_SELECT_OPTIONS}
       defaultErrorType="exceeded-decimal-limit"
-      title="Numeric validation"
+      title="Numeric"
       description="Summary panel for numeric validation errors. Choose a validation scenario, then choose a resolution or enter a corrected value before staging and approving."
       panelHeight={880}
       getPanelProps={(errorType) => {
@@ -389,6 +392,26 @@ export function SummaryPanelNumericPage() {
         "Enter a valid numeric value — Stage Change enables when input passes validation.",
         "All numeric entry fields enforce the column decimal limit (demo: 2 decimal places).",
         ...SHARED_HINTS.slice(1),
+      ]}
+    />
+  );
+}
+
+export function SummaryPanelGapsPage() {
+  return (
+    <SummaryPanelDemoPage
+      validationType="gaps"
+      defaultErrorType="gaps-not-allowed"
+      title="Gaps"
+      description="Summary panel for gaps validation errors. Adjust the To and From values so they match before staging and approving."
+      panelHeight={880}
+      hints={[
+        "The current gap banner shows the difference between the To and From values.",
+        "Enter matching numeric values in both fields — Stage Change enables when they are equal.",
+        "Field errors appear for invalid numbers or when the values still do not match.",
+        "Click the SUMMARY bar to collapse and expand the panel.",
+        "In staged state, change the values — Update Staged Value enables.",
+        "In staged or approved state, use Show/Hide details to compare the new values with the previous gap.",
       ]}
     />
   );

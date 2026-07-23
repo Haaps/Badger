@@ -16,6 +16,7 @@ import {
   SummaryPanelDatePage,
   SummaryPanelDateTimePage,
   SummaryPanelNumericPage,
+  SummaryPanelGapsPage,
 } from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
 import { TextFieldPage } from "./pages/TextFieldPage";
@@ -106,33 +107,38 @@ export const componentCatalog: ComponentEntry[] = [
     children: [
       {
         path: "summary-panel/list-validation",
-        label: "List validation",
+        label: "List",
         Page: SummaryPanelListPage,
       },
       {
         path: "summary-panel/text-validation",
-        label: "Text validation",
+        label: "Text",
         Page: SummaryPanelTextPage,
       },
       {
         path: "summary-panel/boolean-validation",
-        label: "Boolean validation",
+        label: "Boolean",
         Page: SummaryPanelBooleanPage,
       },
       {
         path: "summary-panel/date-validation",
-        label: "Date validation",
+        label: "Date",
         Page: SummaryPanelDatePage,
       },
       {
         path: "summary-panel/date-time-validation",
-        label: "Date/Time validation",
+        label: "Date/Time",
         Page: SummaryPanelDateTimePage,
       },
       {
         path: "summary-panel/numeric-validation",
-        label: "Numeric validation",
+        label: "Numeric",
         Page: SummaryPanelNumericPage,
+      },
+      {
+        path: "summary-panel/gaps-validation",
+        label: "Gaps",
+        Page: SummaryPanelGapsPage,
       },
     ],
   },

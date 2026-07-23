@@ -12,7 +12,10 @@ export type SummaryValidationType =
   | "boolean"
   | "date"
   | "date-time"
-  | "numeric";
+  | "numeric"
+  | "gaps";
+
+export type GapsSummaryErrorType = "gaps-not-allowed";
 
 /** List, boolean, date, and date-time columns share these error categories. */
 export type ListSummaryErrorType = "invalid-value" | "missing-value";
@@ -43,7 +46,8 @@ export type NumericSummaryErrorType =
 export type SummaryErrorType =
   | ListSummaryErrorType
   | TextSummaryErrorType
-  | NumericSummaryErrorType;
+  | NumericSummaryErrorType
+  | GapsSummaryErrorType;
 
 export type CharacterLimitResolution = "trim-to-limit" | "increase-limit";
 
@@ -108,6 +112,14 @@ export type SummaryPanelProps = {
   valueOptions?: SelectMenuOption[];
   /** Replacement boolean value options shown as radio buttons. */
   booleanValueOptions?: BooleanValueOption[];
+  /** Current value in the To column for gaps validation errors. */
+  toValue?: string;
+  /** Current value in the From column for gaps validation errors. */
+  fromValue?: string;
+  /** To column header label used in summary copy and the To field label. */
+  toLabel?: string;
+  /** From column header label used in summary copy and the From field label. */
+  fromLabel?: string;
   /**
    * Required date format hint shown beside the Date field label (e.g. "yyyy/mm/dd").
    * Defined by the platform column schema. The panel validates input against this format.
