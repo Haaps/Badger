@@ -1,4 +1,46 @@
+import {
+  DEMO_BOOLEAN_INVALID_VALUE,
+  DEMO_BOOLEAN_VALUE_OPTIONS,
+  DEMO_CHARACTER_LIMIT,
+  DEMO_DATE_FORMAT,
+  DEMO_DATE_INVALID_VALUE,
+  DEMO_DATE_TIME_FORMAT,
+  DEMO_DATE_TIME_INVALID_VALUE,
+  DEMO_DECIMAL_MAX,
+  DEMO_ENTERED_CHARACTER_COUNT,
+  DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
+  DEMO_ENTERED_DECIMAL_COUNT,
+  DEMO_GAPS_FROM_LABEL,
+  DEMO_GAPS_FROM_VALUE,
+  DEMO_GAPS_TO_LABEL,
+  DEMO_GAPS_TO_VALUE,
+  DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
+  DEMO_NUMERIC_ABOVE_MAX_VALUE,
+  DEMO_NUMERIC_BELOW_MIN_VALUE,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_VALUE,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_BELOW_MIN_VALUE,
+  DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE,
+  DEMO_NUMERIC_INVALID_VALUE,
+  DEMO_NUMERIC_MAX_VALUE,
+  DEMO_NUMERIC_MIN_VALUE,
+} from "../SummaryPanel";
+import type { SummaryErrorType, SummaryPanelProps, SummaryValidationType } from "../SummaryPanel";
 import type { DataTableColumn, DataTableCellValue, DataTableRow } from "./DataTable.types";
+
+export const DEMO_TABLE_HOLE_NUMBERS = [
+  "RJ220",
+  "RJ221",
+  "RJ222",
+  "RJ223",
+  "RJ224",
+  "RJ225",
+  "RJ226",
+  "RJ227",
+  "RJ228",
+  "RJ229",
+] as const;
+
+const LIST_INVALID_VALUE = "PP";
 
 export const DEMO_TABLE_COLUMNS: DataTableColumn[] = [
   { id: "holeNumber", label: "Hole Number" },
@@ -10,6 +52,7 @@ export const DEMO_TABLE_COLUMNS: DataTableColumn[] = [
   { id: "legacyCode", label: "Legacy_Code" },
   { id: "minDiagnostic", label: "Min_Diagnostic" },
   { id: "oxidation", label: "Oxidation" },
+  { id: "verified", label: "Verified" },
   { id: "sampleType", label: "Sample_Type" },
   { id: "assayAu", label: "Assay_Au" },
   { id: "assayCu", label: "Assay_Cu" },
@@ -17,254 +60,293 @@ export const DEMO_TABLE_COLUMNS: DataTableColumn[] = [
   { id: "alteration", label: "Alteration" },
   { id: "geologist", label: "Geologist" },
   { id: "dateLogged", label: "Date_Logged" },
+  { id: "loggedAt", label: "Logged_At" },
   { id: "structureCode", label: "Structure_Code" },
 ];
 
-export const DEMO_HOLE_NUMBERS = [
-  "RJ220",
-  "RJ221",
-  "RJ222",
-  "RJ223",
-  "RJ224",
-  "RJ225",
-  "RJ226",
-  "RJ227",
-  "RJ228",
-  "RJ229",
-  "RJ230",
-  "RJ231",
-  "RJ232",
-  "RJ233",
-  "RJ234",
-  "RJ235",
-  "RJ236",
-] as const;
+type ValidationCellOptions = {
+  invalidValue?: string;
+  panelProps?: Partial<SummaryPanelProps>;
+};
 
-const GEOLOGISTS = ["M. Chen", "A. Okonkwo", "J. Rivera", "S. Patel", "L. Nguyen"] as const;
-const SAMPLE_TYPES = ["Core", "RC", "Chip"] as const;
-const STRUCTURE_CODES = ["F1-NE", "F2-NW", "F3-E", "F4-SW", "F5-W"] as const;
-const LITHO_VALUES = ["PP", "Sap", "Bnd", "Lst"] as const;
-const LEGACY_CODES = ["Zqsmu", "Zanco", "Bnd", "Lst"] as const;
+function formatDepth(value: number) {
+  return `${value}.0`;
+}
 
-function createErrorCell(
+function createIntervalCells(from: number, to: number) {
+  return {
+    from: formatDepth(from),
+    to: formatDepth(to),
+    length: formatDepth(to - from),
+  };
+}
+
+function createValidationCell(
   value: string,
-  overrides: Partial<DataTableCellValue> = {},
+  validationType: SummaryValidationType,
+  errorType: SummaryErrorType,
+  options: ValidationCellOptions = {},
 ): DataTableCellValue {
   return {
     value,
     status: "error",
     panelState: "editable",
-    invalidValue: value,
+    invalidValue: options.invalidValue ?? value,
+    validationType,
+    errorType,
+    cellCount: 1,
+    holeCount: 0,
+    panelProps: options.panelProps,
+  };
+}
+
+function getNumericPanelProps(
+  errorType: SummaryErrorType,
+  invalidValue: string,
+): Partial<SummaryPanelProps> {
+  const shared = {
+    decimalMax: DEMO_DECIMAL_MAX,
+    minValue: DEMO_NUMERIC_MIN_VALUE,
+    maxValue: DEMO_NUMERIC_MAX_VALUE,
+    invalidValue,
+  };
+
+  switch (errorType) {
+    case "exceeded-decimal-limit":
+    case "exceeded-decimal-below-min":
+    case "exceeded-decimal-above-max":
+      return {
+        ...shared,
+        enteredDecimalCount: DEMO_ENTERED_DECIMAL_COUNT,
+        maxEnteredDecimalCountInSelection: DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
+      };
+    default:
+      return shared;
+  }
+}
+
+function createNumericErrorCell(
+  errorType: SummaryErrorType,
+  value: string,
+  invalidValue: string = value,
+) {
+  return createValidationCell(value, "numeric", errorType, {
+    invalidValue,
+    panelProps: getNumericPanelProps(errorType, invalidValue),
+  });
+}
+
+function createListInvalidCell() {
+  return createValidationCell(LIST_INVALID_VALUE, "list", "invalid-value");
+}
+
+function createBaseCells(overrides: Partial<Record<string, DataTableCellValue | string>> = {}) {
+  return {
+    holeNumber: "RJ220",
+    ...createIntervalCells(0, 10),
+    rcDd: "RC",
+    lithoDomain: "Bnd",
+    legacyCode: "Zqsmu",
+    minDiagnostic: "OIC",
+    oxidation: "Oxidized",
+    verified: "True",
+    sampleType: "Core",
+    assayAu: "1.24",
+    assayCu: "0.31",
+    recoveryPct: "98.2",
+    alteration: "Argillic",
+    geologist: "M. Chen",
+    dateLogged: "2024/02/18",
+    loggedAt: "2024/02/18 14:30:00",
+    structureCode: "F2-NW",
     ...overrides,
   };
 }
 
-function createGeneratedRow(index: number): DataTableRow {
-  const holeNumber = DEMO_HOLE_NUMBERS[index % DEMO_HOLE_NUMBERS.length];
-  const from = (index * 4.5).toFixed(1);
-  const to = ((index + 1) * 4.5).toFixed(1);
-  const length = ((index + 1) * 4.5 - index * 4.5).toFixed(1);
-  const litho = LITHO_VALUES[index % LITHO_VALUES.length];
-  const recovery = (90 + (index % 10)).toFixed(1);
-  const assayCu = (0.02 + (index % 15) * 0.05).toFixed(2);
-  const alteration = index % 5 === 0 ? "Silicic" : "Argillic";
-  const legacyCode = LEGACY_CODES[index % LEGACY_CODES.length];
-
-  let lithoDomain: DataTableCellValue | string = litho;
-  if (index % 11 === 0) {
-    lithoDomain = createErrorCell(litho);
-  }
-
-  let recoveryPct: DataTableCellValue | string = recovery;
-  if (index % 29 === 0) {
-    recoveryPct = createErrorCell("badpct", {
-      invalidValue: "badpct",
-      value: "badpct",
-    });
-  }
-
-  let assayCuCell: DataTableCellValue | string = assayCu;
-  if (index % 41 === 0) {
-    assayCuCell = createErrorCell("xyz123");
-  }
-
-  let alterationCell: DataTableCellValue | string = alteration;
-  if (index % 47 === 0) {
-    alterationCell = createErrorCell("unk99");
-  }
-
-  let legacyCodeCell: DataTableCellValue | string = legacyCode;
-  if (index % 59 === 0) {
-    legacyCodeCell = createErrorCell(legacyCode);
-  }
+function createGapsPairCells(
+  toRowId: string,
+  fromRowId: string,
+  toValue: string,
+  fromValue: string,
+): { toCell: DataTableCellValue; fromCell: DataTableCellValue } {
+  const panelProps = {
+    toLabel: DEMO_GAPS_TO_LABEL,
+    fromLabel: DEMO_GAPS_FROM_LABEL,
+  };
+  const shared = {
+    validationType: "gaps" as const,
+    errorType: "gaps-not-allowed" as const,
+    status: "error" as const,
+    panelState: "editable" as const,
+    cellCount: 2,
+    holeCount: 0,
+    panelProps,
+  };
 
   return {
-    id: `row-${index}`,
-    cells: {
-      holeNumber,
-      from,
-      to,
-      length,
-      rcDd: index % 3 === 0 ? "RC" : "",
-      lithoDomain,
-      legacyCode: legacyCodeCell,
-      minDiagnostic: index % 2 === 0 ? "OIC" : "BND",
-      oxidation: index % 4 === 0 ? "Oxidized" : "",
-      sampleType: SAMPLE_TYPES[index % SAMPLE_TYPES.length],
-      assayAu: (0.1 + (index % 20) * 0.11).toFixed(2),
-      assayCu: assayCuCell,
-      recoveryPct,
-      alteration: alterationCell,
-      geologist: GEOLOGISTS[index % GEOLOGISTS.length],
-      dateLogged: `2024-${String((index % 12) + 1).padStart(2, "0")}-${String((index % 27) + 1).padStart(2, "0")}`,
-      structureCode: STRUCTURE_CODES[index % STRUCTURE_CODES.length],
+    toCell: {
+      ...shared,
+      value: toValue,
+      invalidValue: toValue,
+      gapsPartner: { rowId: fromRowId, columnId: "from" },
+    },
+    fromCell: {
+      ...shared,
+      value: fromValue,
+      invalidValue: fromValue,
+      gapsPartner: { rowId: toRowId, columnId: "to" },
     },
   };
 }
 
-const FEATURED_ROWS: DataTableRow[] = [
-  {
-    id: "row-1",
-    cells: {
-      holeNumber: "RJ220",
-      from: "48.0",
-      to: "96.0",
-      length: "48.0",
-      rcDd: "",
-      lithoDomain: createErrorCell("PP"),
-      legacyCode: "Zqsmu",
-      minDiagnostic: "OIC",
-      oxidation: "Oxidized",
-      sampleType: "Core",
-      assayAu: "1.24",
-      assayCu: "0.31",
-      recoveryPct: "98.2",
-      alteration: "Argillic",
-      geologist: "M. Chen",
-      dateLogged: "2024-02-18",
-      structureCode: "F2-NW",
-    },
-  },
-  {
-    id: "row-2",
-    cells: {
-      holeNumber: "RJ220",
-      from: "100.0",
-      to: "105.0",
-      length: "5.0",
-      rcDd: "",
-      lithoDomain: createErrorCell("PP"),
-      legacyCode: "Zqsmu",
-      minDiagnostic: "OIC",
-      oxidation: "",
-      sampleType: "Chip",
-      assayAu: "0.87",
-      assayCu: "0.22",
-      recoveryPct: createErrorCell("badpct", {
-        invalidValue: "badpct",
-        value: "badpct",
-      }),
-      alteration: "Phyllic",
-      geologist: "A. Okonkwo",
-      dateLogged: "2024-02-22",
-      structureCode: "F1-NE",
-    },
-  },
-  {
-    id: "row-3",
-    cells: {
-      holeNumber: "RJ220",
-      from: "105.0",
-      to: "110.0",
-      length: "5.0",
-      rcDd: "",
-      lithoDomain: createErrorCell("PP"),
-      legacyCode: "Zanco",
-      minDiagnostic: "OIC",
-      oxidation: "Partial",
-      sampleType: "Core",
-      assayAu: "2.15",
-      assayCu: createErrorCell("xyz123"),
-      recoveryPct: "94.1",
-      alteration: createErrorCell("unk99"),
-      geologist: "J. Rivera",
-      dateLogged: "2024-03-01",
-      structureCode: "F3-E",
-    },
-  },
-  {
-    id: "row-4",
-    cells: {
-      holeNumber: "RJ220",
-      from: "107.0",
-      to: "120.0",
-      length: "13.222",
-      rcDd: "",
-      lithoDomain: createErrorCell("PP"),
-      legacyCode: "Zanco",
-      minDiagnostic: "OIC",
-      oxidation: "",
-      sampleType: "Core",
-      assayAu: "0.55",
-      assayCu: "0.09",
-      recoveryPct: "91.8",
-      alteration: "Silicic",
-      geologist: "M. Chen",
-      dateLogged: "2024-03-14",
-      structureCode: "F1-NE",
-    },
-  },
-  {
-    id: "row-5",
-    cells: {
-      holeNumber: "RJ221",
-      from: "0.0",
-      to: "45.0",
-      length: "45.0",
-      rcDd: "RC",
-      lithoDomain: createErrorCell("Sap"),
-      legacyCode: "Bnd",
-      minDiagnostic: createErrorCell("BND"),
-      oxidation: "Fresh",
-      sampleType: "RC",
-      assayAu: "0.12",
-      assayCu: "0.04",
-      recoveryPct: "99.0",
-      alteration: "Propylitic",
-      geologist: "A. Okonkwo",
-      dateLogged: "2024-01-09",
-      structureCode: "F4-SW",
-    },
-  },
-  {
-    id: "row-6",
-    cells: {
-      holeNumber: "RJ221",
-      from: "45.0",
-      to: "90.0",
-      length: "45.0",
-      rcDd: "RC",
-      lithoDomain: createErrorCell("PP"),
-      legacyCode: "Lst",
-      minDiagnostic: "LST",
-      oxidation: "Oxidized",
-      sampleType: "RC",
-      assayAu: "3.44",
-      assayCu: "0.67",
-      recoveryPct: "97.3",
-      alteration: createErrorCell("Silicic"),
-      geologist: "J. Rivera",
-      dateLogged: "2024-01-11",
-      structureCode: "F2-NW",
-    },
-  },
-];
+function createIntervalRow(
+  id: string,
+  from: number,
+  to: number,
+  holeNumber: string,
+  overrides: Partial<Record<string, DataTableCellValue | string>> = {},
+): DataTableRow {
+  return {
+    id,
+    cells: createBaseCells({
+      holeNumber,
+      ...createIntervalCells(from, to),
+      ...overrides,
+    }),
+  };
+}
 
-const GENERATED_ROW_COUNT = 311;
+const GAPS_INTERVAL_END_ROW_ID = "validation-gaps-interval-end";
+const GAPS_INTERVAL_START_ROW_ID = "validation-gaps-interval-start";
 
+const GAPS_PAIR = createGapsPairCells(
+  GAPS_INTERVAL_END_ROW_ID,
+  GAPS_INTERVAL_START_ROW_ID,
+  DEMO_GAPS_TO_VALUE,
+  DEMO_GAPS_FROM_VALUE,
+);
+
+/** Intervals run 0→10, 10→20, 20→30, then a gap (30 vs 40), then validation errors continue 50→60, … */
 export const DEMO_TABLE_ROWS: DataTableRow[] = [
-  ...FEATURED_ROWS,
-  ...Array.from({ length: GENERATED_ROW_COUNT }, (_, index) =>
-    createGeneratedRow(index + FEATURED_ROWS.length + 1),
+  createIntervalRow("validation-interval-0-10", 0, 10, DEMO_TABLE_HOLE_NUMBERS[0]),
+  createIntervalRow("validation-interval-10-20", 10, 20, DEMO_TABLE_HOLE_NUMBERS[0]),
+  createIntervalRow(GAPS_INTERVAL_END_ROW_ID, 20, 30, DEMO_TABLE_HOLE_NUMBERS[0], {
+    to: GAPS_PAIR.toCell,
+  }),
+  createIntervalRow(GAPS_INTERVAL_START_ROW_ID, 40, 50, DEMO_TABLE_HOLE_NUMBERS[0], {
+    from: GAPS_PAIR.fromCell,
+  }),
+  ...DEMO_TABLE_HOLE_NUMBERS.slice(0, 8).map((holeNumber, index) =>
+    createIntervalRow(
+      `validation-list-invalid-${holeNumber}`,
+      50 + index * 10,
+      60 + index * 10,
+      holeNumber,
+      {
+        lithoDomain: createListInvalidCell(),
+      },
+    ),
   ),
+  createIntervalRow("validation-list-missing", 130, 140, DEMO_TABLE_HOLE_NUMBERS[8], {
+    lithoDomain: createValidationCell("", "list", "missing-value", {
+      invalidValue: "",
+    }),
+  }),
+  createIntervalRow(
+    "validation-text-exceeded-character-limit",
+    140,
+    150,
+    DEMO_TABLE_HOLE_NUMBERS[1],
+    {
+      alteration: createValidationCell(DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT, "text", "exceeded-character-limit", {
+        panelProps: {
+          characterLimit: DEMO_CHARACTER_LIMIT,
+          enteredCharacterCount: DEMO_ENTERED_CHARACTER_COUNT,
+          exceededLimitCellText: DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
+        },
+      }),
+    },
+  ),
+  createIntervalRow("validation-text-value-required", 150, 160, DEMO_TABLE_HOLE_NUMBERS[2], {
+    alteration: createValidationCell("", "text", "value-required", {
+      invalidValue: "",
+    }),
+  }),
+  createIntervalRow("validation-boolean-invalid", 160, 170, DEMO_TABLE_HOLE_NUMBERS[3], {
+    verified: createValidationCell(DEMO_BOOLEAN_INVALID_VALUE, "boolean", "invalid-value", {
+      panelProps: {
+        booleanValueOptions: DEMO_BOOLEAN_VALUE_OPTIONS,
+      },
+    }),
+  }),
+  createIntervalRow("validation-boolean-missing", 170, 180, DEMO_TABLE_HOLE_NUMBERS[4], {
+    verified: createValidationCell("", "boolean", "missing-value", {
+      invalidValue: "",
+      panelProps: {
+        booleanValueOptions: DEMO_BOOLEAN_VALUE_OPTIONS,
+      },
+    }),
+  }),
+  createIntervalRow("validation-date-invalid", 180, 190, DEMO_TABLE_HOLE_NUMBERS[5], {
+    dateLogged: createValidationCell(DEMO_DATE_INVALID_VALUE, "date", "invalid-value", {
+      panelProps: {
+        dateFormat: DEMO_DATE_FORMAT,
+      },
+    }),
+  }),
+  createIntervalRow("validation-date-time-invalid", 190, 200, DEMO_TABLE_HOLE_NUMBERS[6], {
+    loggedAt: createValidationCell(DEMO_DATE_TIME_INVALID_VALUE, "date-time", "invalid-value", {
+      panelProps: {
+        dateTimeFormat: DEMO_DATE_TIME_FORMAT,
+      },
+    }),
+  }),
+  createIntervalRow(
+    "validation-numeric-exceeded-decimal-limit",
+    200,
+    210,
+    DEMO_TABLE_HOLE_NUMBERS[7],
+    {
+      assayAu: createNumericErrorCell(
+        "exceeded-decimal-limit",
+        DEMO_NUMERIC_EXCEEDED_DECIMAL_VALUE,
+      ),
+    },
+  ),
+  createIntervalRow(
+    "validation-numeric-exceeded-decimal-below-min",
+    210,
+    220,
+    DEMO_TABLE_HOLE_NUMBERS[8],
+    {
+      assayAu: createNumericErrorCell(
+        "exceeded-decimal-below-min",
+        DEMO_NUMERIC_EXCEEDED_DECIMAL_BELOW_MIN_VALUE,
+      ),
+    },
+  ),
+  createIntervalRow(
+    "validation-numeric-exceeded-decimal-above-max",
+    220,
+    230,
+    DEMO_TABLE_HOLE_NUMBERS[9],
+    {
+      assayAu: createNumericErrorCell(
+        "exceeded-decimal-above-max",
+        DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_VALUE,
+      ),
+    },
+  ),
+  createIntervalRow("validation-numeric-missing", 230, 240, DEMO_TABLE_HOLE_NUMBERS[0], {
+    assayAu: createNumericErrorCell("missing-value", "", ""),
+  }),
+  createIntervalRow("validation-numeric-invalid", 240, 250, DEMO_TABLE_HOLE_NUMBERS[1], {
+    assayAu: createNumericErrorCell("invalid-value", DEMO_NUMERIC_INVALID_VALUE),
+  }),
+  createIntervalRow("validation-numeric-below-min", 250, 260, DEMO_TABLE_HOLE_NUMBERS[2], {
+    assayAu: createNumericErrorCell("below-min-value", DEMO_NUMERIC_BELOW_MIN_VALUE),
+  }),
+  createIntervalRow("validation-numeric-above-max", 260, 270, DEMO_TABLE_HOLE_NUMBERS[3], {
+    assayAu: createNumericErrorCell("above-max-value", DEMO_NUMERIC_ABOVE_MAX_VALUE),
+  }),
 ];

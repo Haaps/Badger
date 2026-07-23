@@ -448,7 +448,7 @@ function getExceededLimitResultFromResolution(
   return originalText.slice(0, parsedLimit);
 }
 
-function getExceededLimitResultText(
+export function getExceededLimitResultText(
   resolutionValue: string,
   columnLimit: number,
   originalText: string,
@@ -613,7 +613,7 @@ function getExceededDecimalLimitResultFromResolution(
   return resolutionInput.trim() || originalValue;
 }
 
-function getExceededDecimalLimitResultText(
+export function getExceededDecimalLimitResultText(
   resolutionValue: string,
   decimalMax: number,
   originalValue: string,
@@ -904,7 +904,7 @@ function getTitle(
         return `Above decimal max of ${decimalMax} and below minimum value of ${minValue}`;
       }
       if (errorType === "exceeded-decimal-above-max") {
-        return `${decimalMax} decimal max: ${enteredDecimalCount} entered, ${invalidValue} above ${maxValue} max`;
+        return `Above decimal max of ${decimalMax} and above maximum value of ${maxValue}`;
       }
       if (isNumericDecimalLimitResolutionError(validationType, errorType)) {
         return `${decimalMax} decimal max: ${enteredDecimalCount} entered`;
@@ -1171,6 +1171,7 @@ export function SummaryPanel({
   fromValue: fromValueProp,
   toLabel: toLabelProp,
   fromLabel: fromLabelProp,
+  gapsSelectedField = "from",
   dateFormat: dateFormatProp,
   dateTimeFormat: dateTimeFormatProp,
   holeOptions = DEMO_HOLE_OPTIONS,
@@ -1493,48 +1494,30 @@ export function SummaryPanel({
           ? customValue.trim()
           : selectedValue;
 
-  const canStageChange =
-    isEditable &&
-    (isExceededLimit
-      ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
-      : isNumericDecimalLimitResolution
-        ? canCommitExceededDecimalLimitResolution(
-            decimalLimitResolution,
-            newDecimalLimit,
-            manualNumericValue,
-            decimalMax,
-          )
-        : isDateTime
-          ? isDateTimeValueCommittable
-          : isDate
-            ? isDateValueCommittable
-            : isGaps
-              ? isGapsValueCommittable
+  const isCurrentValueCommittable = isExceededLimit
+    ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
+    : isNumericDecimalLimitResolution
+      ? canCommitExceededDecimalLimitResolution(
+          decimalLimitResolution,
+          newDecimalLimit,
+          manualNumericValue,
+          decimalMax,
+        )
+      : isDateTime
+        ? isDateTimeValueCommittable
+        : isDate
+          ? isDateValueCommittable
+          : isGaps
+            ? isGapsValueCommittable
             : isNumeric
               ? isNumericValueCommittable
-              : currentValue !== "");
+              : currentValue !== "";
+
+  const canStageChange = isEditable && isCurrentValueCommittable;
   const hasStagedChanges =
     currentValue !== stagedValue || applyScope !== stagedApplyScope;
-  const canUpdateStaged = isStaged && hasStagedChanges && (
-    isExceededLimit
-      ? canCommitExceededLimitResolution(characterLimitResolution, newCharacterLimit)
-      : isNumericDecimalLimitResolution
-        ? canCommitExceededDecimalLimitResolution(
-            decimalLimitResolution,
-            newDecimalLimit,
-            manualNumericValue,
-            decimalMax,
-          )
-        : isDateTime
-          ? isDateTimeValueCommittable
-          : isDate
-            ? isDateValueCommittable
-            : isGaps
-              ? isGapsValueCommittable
-            : isNumeric
-              ? isNumericValueCommittable
-              : currentValue !== ""
-  );
+  const canUpdateStaged = isStaged && hasStagedChanges && isCurrentValueCommittable;
+  const canApprove = isStaged && isCurrentValueCommittable;
 
   const stagedGapsValues = parseGapsStagedValue(stagedValue);
   const stagedAsText = isExceededLimit
@@ -1642,10 +1625,6 @@ export function SummaryPanel({
   const titleClassNames = [
     styles.title,
     isEditable && styles.titleError,
-    isEditable &&
-      validationType === "numeric" &&
-      errorType === "exceeded-decimal-below-min" &&
-      styles.titleWrap,
   ]
     .filter(Boolean)
     .join(" ");
@@ -1709,6 +1688,7 @@ export function SummaryPanel({
   };
 
   const handleApprove = () => {
+    if (!canApprove) return;
     setStagedValue(currentValue);
     setStagedApplyScope(applyScope);
     if (isExceededLimit) {
@@ -2154,7 +2134,11 @@ export function SummaryPanel({
                   <>
                     <p className={styles.summaryText}>
                       {isGaps
-                        ? getGapsSummaryMessage(resolvedFromLabel, resolvedToLabel)
+                        ? getGapsSummaryMessage(
+                            resolvedFromLabel,
+                            resolvedToLabel,
+                            gapsSelectedField,
+                          )
                         : getSummaryMessage(
                             validationType,
                             errorType,
@@ -2280,6 +2264,7 @@ export function SummaryPanel({
                   <Button
                     variant="approval"
                     className={styles.fullWidthButton}
+                    disabled={!canApprove}
                     onClick={handleApprove}
                   >
                     Approve Update

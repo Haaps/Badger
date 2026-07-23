@@ -17,10 +17,9 @@ export function DataTablePage() {
       <header className={styles.header}>
         <h2 className={styles.name}>Data Table</h2>
         <p className={styles.description}>
-          Scrollable validation table integrated with the Summary Panel, using the
-          exact column headers and demo data from Figma. Colored cells start as
-          errors and become staged or approved as you work through corrections.
-          Only colored cells are selectable.
+          Scrollable validation table integrated with the Summary Panel. Colored
+          cells at the top demonstrate each validation category — click one to
+          open the matching correction workflow. Only colored cells are selectable.
         </p>
       </header>
 
@@ -37,8 +36,8 @@ export function DataTablePage() {
           <ol className={styles.hintList}>
             <li>Scroll the table within the container.</li>
             <li>
-              Click a colored cell — the Summary Panel opens with dummy content
-              for that cell.
+              Click a colored cell — the Summary Panel opens for that validation
+              type and error scenario.
             </li>
             <li>Click another colored cell — the panel content swaps.</li>
             <li>
@@ -46,6 +45,10 @@ export function DataTablePage() {
               back.
             </li>
             <li>Hover rows to see the neutral/50 highlight on white cells.</li>
+            <li>
+              From/To intervals run 0→10, 10→20, 20→30, then a gap (To 30.0 vs
+              next From 40.0). Click either red cell to fix the gap.
+            </li>
             <li>Use Reset to restore the original error-only table.</li>
           </ol>
         </p>

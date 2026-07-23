@@ -257,8 +257,9 @@ export function HowToUsePage() {
                 <code>gaps-not-allowed</code>
               </td>
               <td>
-                To and From fields with current gap banner; pass column header
-                labels via <code>toLabel</code> and <code>fromLabel</code>
+                To (row above) and From (row below) fields with current gap
+                banner; pass column header labels via <code>toLabel</code> and{" "}
+                <code>fromLabel</code>
               </td>
               <td>
                 <code>toValue</code>, <code>fromValue</code>,{" "}

@@ -76,7 +76,7 @@
 }
 
 .headerIcon {
-  flex-shrink: 0;
+  display: inline-flex;
 }
 
 .bodyRow:hover .cell:not(.cellStatus) {
@@ -123,6 +123,12 @@
   z-index: 0;
 }
 
+.cellSelectable:hover,
+.cellSelectable:focus-within {
+  z-index: 2;
+  overflow: visible;
+}
+
 .cellButton {
   display: flex;
   align-items: center;
@@ -140,6 +146,7 @@
   text-align: left;
   cursor: pointer;
   box-sizing: border-box;
+  min-width: 0;
 }
 
 .cellButton:focus {
@@ -183,6 +190,47 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+.cellTextWrap {
+  position: relative;
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cellTextWrap:hover .cellTooltip,
+.cellButton:hover .cellTooltip,
+.cellButton:focus-visible .cellTooltip {
+  visibility: visible;
+  opacity: 1;
+}
+
+.cellTooltip {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  visibility: hidden;
+  opacity: 0;
+  width: max-content;
+  max-width: 320px;
+  padding: var(--padding-x-small) var(--padding-small);
+  border: 1px solid var(--neutral-100);
+  border-radius: var(--corner-radius-small);
+  background: var(--neutral-0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  font-family: var(--typography-font-family);
+  font-size: 12px;
+  font-weight: var(--typography-small-regular-font-weight);
+  line-height: 1.4;
+  letter-spacing: var(--typography-small-regular-letter-spacing);
+  color: var(--neutral-500);
+  white-space: normal;
+  word-break: break-word;
+  pointer-events: none;
+  transition: opacity 120ms ease;
 }
 
 .summaryPanel {

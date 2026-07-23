@@ -1,0 +1,12 @@
+.root {
+  display: inline-flex;
+  flex-shrink: 0;
+  width: var(--icon-sizes-x-small);
+  height: var(--icon-sizes-x-small);
+  overflow: clip;
+}
+
+.root svg {
+  width: 100%;
+  height: 100%;
+}

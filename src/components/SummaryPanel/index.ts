@@ -1,4 +1,4 @@
-export { SummaryPanel } from "./SummaryPanel";
+export { SummaryPanel, getExceededLimitResultText, getExceededDecimalLimitResultText } from "./SummaryPanel";
 export type {
   BooleanSummaryErrorType,
   BooleanValueOption,

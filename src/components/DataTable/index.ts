@@ -8,4 +8,4 @@ export type {
   SelectedTableCell,
   TableCellStatus,
 } from "./DataTable.types";
-export { DEMO_TABLE_COLUMNS, DEMO_TABLE_ROWS } from "./DataTable.demoData";
+export { DEMO_TABLE_COLUMNS, DEMO_TABLE_ROWS, DEMO_TABLE_HOLE_NUMBERS } from "./DataTable.demoData";

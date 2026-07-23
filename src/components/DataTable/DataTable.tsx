@@ -1,6 +1,6 @@
 /**
  * DataTable renders validation-status cells; DataTableWithSummary is a gallery
- * composition that wires row state to SummaryPanel (list validation demo only).
+ * composition that wires row state to SummaryPanel.
  *
  * Cells with a `status` are selectable; selecting one opens the panel and syncs
  * stage/approve actions back onto matching rows (single cell or drill-hole scope).
@@ -8,10 +8,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { StatusIcon } from "../FilterBar/icons/StatusIcon";
 import type { StatusFilter } from "../FilterBar";
-import { SummaryPanel } from "../SummaryPanel";
+import {
+  SummaryPanel,
+  parseGapsStagedValue,
+  getExceededLimitResultText,
+  getExceededDecimalLimitResultText,
+} from "../SummaryPanel";
 import type { SummaryPanelState, SummaryApplyScope } from "../SummaryPanel";
 import { DEMO_TABLE_COLUMNS, DEMO_TABLE_ROWS } from "./DataTable.demoData";
-import { DEMO_VALUE_OPTIONS } from "../SummaryPanel";
+import { DEMO_CHARACTER_LIMIT, DEMO_DECIMAL_MAX, DEMO_VALUE_OPTIONS } from "../SummaryPanel";
 import type { SelectMenuOption } from "../SelectMenu";
 import type {
   DataTableCellValue,
@@ -62,6 +67,69 @@ function resolveDisplayValue(value: string, options: SelectMenuOption[] = DEMO_V
     return option.label;
   }
   return value;
+}
+
+function getExceededLimitOriginalText(cell: DataTableCellValue) {
+  return (
+    cell.panelProps?.exceededLimitCellText ??
+    cell.invalidValue ??
+    cell.value
+  );
+}
+
+function resolveStagedCellDisplayValue(cell: DataTableCellValue, stagedValue: string) {
+  if (
+    cell.validationType === "text" &&
+    cell.errorType === "exceeded-character-limit"
+  ) {
+    const characterLimit = cell.panelProps?.characterLimit ?? DEMO_CHARACTER_LIMIT;
+    return getExceededLimitResultText(
+      stagedValue,
+      characterLimit,
+      getExceededLimitOriginalText(cell),
+    );
+  }
+
+  if (
+    cell.validationType === "numeric" &&
+    cell.errorType === "exceeded-decimal-limit"
+  ) {
+    const decimalMax = cell.panelProps?.decimalMax ?? DEMO_DECIMAL_MAX;
+    const originalValue = cell.invalidValue ?? cell.value;
+    return getExceededDecimalLimitResultText(stagedValue, decimalMax, originalValue);
+  }
+
+  return resolveDisplayValue(stagedValue);
+}
+
+const CELL_TEXT_TRUNCATE_LENGTH = 30;
+
+function truncateCellText(text: string) {
+  if (text.length <= CELL_TEXT_TRUNCATE_LENGTH) {
+    return { displayText: text, isTruncated: false };
+  }
+
+  return {
+    displayText: `${text.slice(0, CELL_TEXT_TRUNCATE_LENGTH)}…`,
+    isTruncated: true,
+  };
+}
+
+function DataTableCellText({ text }: { text: string }) {
+  const { displayText, isTruncated } = truncateCellText(text);
+
+  if (!isTruncated) {
+    return <span className={styles.cellText}>{displayText}</span>;
+  }
+
+  return (
+    <span className={styles.cellTextWrap}>
+      <span className={styles.cellText}>{displayText}</span>
+      <span className={styles.cellTooltip} role="tooltip">
+        {text}
+      </span>
+    </span>
+  );
 }
 
 function getHoleNumberValue(cell: DataTableCellValue | string | undefined) {
@@ -233,6 +301,7 @@ function getMatchingErrorHoleOptions(
 }
 
 function buildCellUpdates(
+  cell: DataTableCellValue,
   state: SummaryPanelState,
   stagedValue: string | undefined,
   applyScope: SummaryApplyScope | undefined,
@@ -245,7 +314,7 @@ function buildCellUpdates(
   };
 
   if (stagedValue && (state === "staged" || state === "approved")) {
-    updates.value = resolveDisplayValue(stagedValue);
+    updates.value = resolveStagedCellDisplayValue(cell, stagedValue);
     updates.initialStagedValue = stagedValue;
   }
 
@@ -260,6 +329,129 @@ function buildCellUpdates(
   return updates;
 }
 
+function getCellDisplayValue(cell: DataTableCellValue | string | undefined) {
+  if (typeof cell === "object") {
+    return cell.value;
+  }
+
+  return cell ?? "";
+}
+
+function getGapsPairLocations(
+  selectedCell: SelectedTableCell,
+): { toRowId: string; fromRowId: string } | null {
+  const { cell, rowId, columnId } = selectedCell;
+  if (cell.validationType !== "gaps" || !cell.gapsPartner) {
+    return null;
+  }
+
+  if (columnId === "to") {
+    return { toRowId: rowId, fromRowId: cell.gapsPartner.rowId };
+  }
+
+  if (columnId === "from") {
+    return { toRowId: cell.gapsPartner.rowId, fromRowId: rowId };
+  }
+
+  return null;
+}
+
+function getGapsSummaryContext(rows: DataTableRow[], selectedCell: SelectedTableCell) {
+  const pair = getGapsPairLocations(selectedCell);
+  if (!pair) {
+    return null;
+  }
+
+  const toRow = rows.find((row) => row.id === pair.toRowId);
+  const fromRow = rows.find((row) => row.id === pair.fromRowId);
+  const toCell = toRow?.cells.to;
+  const fromCell = fromRow?.cells.from;
+  const anchorCell =
+    typeof fromCell === "object"
+      ? fromCell
+      : typeof toCell === "object"
+        ? toCell
+        : selectedCell.cell;
+
+  return {
+    toValue: getCellDisplayValue(toCell),
+    fromValue: getCellDisplayValue(fromCell),
+    defaultPanelState: anchorCell.panelState ?? "editable",
+    initialStagedValue: anchorCell.initialStagedValue,
+    cellCount: 2,
+    holeCount: anchorCell.holeCount ?? 0,
+    toLabel: anchorCell.panelProps?.toLabel,
+    fromLabel: anchorCell.panelProps?.fromLabel,
+  };
+}
+
+function applyGapsPanelChangeToRows(
+  rows: DataTableRow[],
+  selectedCell: SelectedTableCell,
+  state: SummaryPanelState,
+  stagedValue: string | undefined,
+): DataTableRow[] {
+  const pair = getGapsPairLocations(selectedCell);
+  if (!pair) {
+    return rows;
+  }
+
+  const status = panelStateToCellStatus(state);
+  const parsed = stagedValue ? parseGapsStagedValue(stagedValue) : null;
+  const sharedUpdates: Partial<DataTableCellValue> = {
+    status,
+    panelState: state,
+    applyScope: "cell",
+    appliedHoles: undefined,
+  };
+
+  if (stagedValue && (state === "staged" || state === "approved")) {
+    sharedUpdates.initialStagedValue = stagedValue;
+  }
+
+  return rows.map((row) => {
+    if (row.id === pair.toRowId) {
+      const toCell = row.cells.to;
+      if (typeof toCell !== "object" || toCell.validationType !== "gaps") {
+        return row;
+      }
+
+      return {
+        ...row,
+        cells: {
+          ...row.cells,
+          to: {
+            ...toCell,
+            ...sharedUpdates,
+            ...(parsed ? { value: parsed.toValue } : {}),
+          },
+        },
+      };
+    }
+
+    if (row.id === pair.fromRowId) {
+      const fromCell = row.cells.from;
+      if (typeof fromCell !== "object" || fromCell.validationType !== "gaps") {
+        return row;
+      }
+
+      return {
+        ...row,
+        cells: {
+          ...row.cells,
+          from: {
+            ...fromCell,
+            ...sharedUpdates,
+            ...(parsed ? { value: parsed.fromValue } : {}),
+          },
+        },
+      };
+    }
+
+    return row;
+  });
+}
+
 function applyPanelChangeToRows(
   rows: DataTableRow[],
   selectedCell: SelectedTableCell,
@@ -268,11 +460,14 @@ function applyPanelChangeToRows(
   applyScope: SummaryApplyScope | undefined,
   selectedHoles: string[] | undefined,
 ): DataTableRow[] {
+  if (selectedCell.cell.validationType === "gaps") {
+    return applyGapsPanelChangeToRows(rows, selectedCell, state, stagedValue);
+  }
+
   const scope = applyScope ?? "cell";
   const selectedInvalidValue = getMatchingErrorValue(selectedCell.cell);
   const currentPanelState = selectedCell.cell.panelState ?? "editable";
   const action = getApplyAction(currentPanelState, state);
-  const updates = buildCellUpdates(state, stagedValue, applyScope, selectedHoles);
   const columnId = selectedCell.columnId;
 
   // Hole scope: update every matching cell in selected drill holes for this column.
@@ -294,13 +489,15 @@ function applyPanelChangeToRows(
         return row;
       }
 
+      const cellUpdates = buildCellUpdates(cell, state, stagedValue, applyScope, selectedHoles);
+
       return {
         ...row,
         cells: {
           ...row.cells,
           [columnId]: {
             ...cell,
-            ...updates,
+            ...cellUpdates,
           },
         },
       };
@@ -317,13 +514,15 @@ function applyPanelChangeToRows(
       return row;
     }
 
+    const cellUpdates = buildCellUpdates(cell, state, stagedValue, applyScope, selectedHoles);
+
     return {
       ...row,
       cells: {
         ...row.cells,
         [columnId]: {
           ...cell,
-          ...updates,
+          ...cellUpdates,
         },
       },
     };
@@ -472,7 +671,7 @@ export function DataTable({
                       }
                       aria-pressed={isSelected}
                     >
-                      <span className={styles.cellText}>{text}</span>
+                      <DataTableCellText text={text} />
                     </button>
                   </td>
                 );
@@ -480,7 +679,7 @@ export function DataTable({
 
               return (
                 <td key={column.id} className={getCellClassName(undefined, false, false)}>
-                  <span className={styles.cellText}>{text}</span>
+                  <DataTableCellText text={text} />
                 </td>
               );
             })}
@@ -603,23 +802,60 @@ export function DataTableWithSummary({
     return isAvailable ? [holeNumber] : undefined;
   }, [rows, selectedCell, holeOptions]);
 
+  const gapsSummaryContext = useMemo(() => {
+    if (!selectedCell || selectedCell.cell.validationType !== "gaps") {
+      return null;
+    }
+
+    return getGapsSummaryContext(rows, selectedCell);
+  }, [rows, selectedCell]);
+
   // Remount SummaryPanel when the selected cell changes so workflow state resets cleanly.
   const panelKey = useMemo(() => {
     if (!selectedCell) return "summary-panel-empty";
+    if (selectedCell.cell.validationType === "gaps") {
+      const pair = getGapsPairLocations(selectedCell);
+      if (pair) {
+        return `gaps:${pair.toRowId}:${pair.fromRowId}`;
+      }
+    }
     return `${selectedCell.rowId}:${selectedCell.columnId}`;
-  }, [selectedCell]);
+  }, [selectedCell, rows]);
 
   const summaryProps = selectedCell
     ? {
+        validationType: selectedCell.cell.validationType ?? "list",
+        errorType: selectedCell.cell.errorType ?? "invalid-value",
         invalidValue: selectedCell.cell.invalidValue ?? selectedCell.cell.value,
-        cellCount: errorOccurrenceStats?.cellCount ?? 0,
-        holeCount: errorOccurrenceStats?.holeCount ?? 0,
-        defaultPanelState: selectedCell.cell.panelState ?? "editable",
-        initialStagedValue: selectedCell.cell.initialStagedValue,
+        cellCount:
+          gapsSummaryContext?.cellCount ??
+          errorOccurrenceStats?.cellCount ??
+          selectedCell.cell.cellCount ??
+          1,
+        holeCount:
+          gapsSummaryContext?.holeCount ??
+          errorOccurrenceStats?.holeCount ??
+          selectedCell.cell.holeCount ??
+          0,
+        defaultPanelState:
+          gapsSummaryContext?.defaultPanelState ??
+          selectedCell.cell.panelState ??
+          "editable",
+        initialStagedValue:
+          gapsSummaryContext?.initialStagedValue ?? selectedCell.cell.initialStagedValue,
         holeOptions,
         defaultSelectedHoles,
-        defaultApplyScope,
+        defaultApplyScope:
+          selectedCell.cell.validationType === "gaps" ? "cell" : defaultApplyScope,
         getApplyImpact,
+        ...selectedCell.cell.panelProps,
+        ...gapsSummaryContext,
+        ...(selectedCell.cell.validationType === "gaps"
+          ? {
+              gapsSelectedField:
+                selectedCell.columnId === "to" ? ("to" as const) : ("from" as const),
+            }
+          : {}),
       }
     : {
         holeOptions,
