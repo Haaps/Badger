@@ -3,7 +3,7 @@
  * editable (pick a fix) → staged (pending review) → approved (committed).
  *
  * `validationType` + `errorType` select copy and input UI (list select, text area,
- * boolean radios, date field, date/time fields, numeric fields, or character-limit resolution). Apply scope controls whether the
+ * boolean radios, date field, date/time fields, numeric fields, gaps fields, or character-limit resolution). Apply scope controls whether the
  * fix targets one cell or matching errors across selected drill holes.
  *
  * Omitted props fall back to demo constants from SummaryPanel.demoData so the gallery
@@ -24,6 +24,18 @@ import {
   isValidDateForFormat,
   isValidDateTimeForFormat,
 } from "./dateFormatValidation";
+import {
+  areGapsValuesEqual,
+  computeGapsGap,
+  formatGapsGap,
+  formatGapsValuesSummary,
+  getGapsFieldErrorMessage,
+  getGapsStagedValue,
+  getGapsSummaryMessage,
+  isValidGapsResolution,
+  isValidGapsValue,
+  parseGapsStagedValue,
+} from "./gapsValidation";
 import {
   getNumericValidationErrorMessage,
   isValidNumericValue,
@@ -50,6 +62,13 @@ import {
   DEMO_CHARACTER_LIMIT,
   DEMO_DEFAULT_SELECTED_HOLES,
   DEMO_ENTERED_CHARACTER_COUNT,
+  DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
+  DEMO_GAPS_CELL_COUNT,
+  DEMO_GAPS_FROM_LABEL,
+  DEMO_GAPS_FROM_VALUE,
+  DEMO_GAPS_HOLE_COUNT,
+  DEMO_GAPS_TO_LABEL,
+  DEMO_GAPS_TO_VALUE,
   DEMO_HOLE_COUNT,
   DEMO_HOLE_OPTIONS,
   DEMO_INVALID_VALUE,
@@ -90,6 +109,7 @@ import type {
   BooleanValueOption,
   CharacterLimitResolution,
   DecimalLimitResolution,
+  GapsSummaryErrorType,
   ListSummaryErrorType,
   NumericSummaryErrorType,
   SummaryApplyImpact,
@@ -158,6 +178,12 @@ const BOOLEAN_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
   },
 };
 
+const GAPS_ERROR_COPY: Record<GapsSummaryErrorType, PanelCopy> = {
+  "gaps-not-allowed": {
+    editableTitle: "Gaps not allowed",
+  },
+};
+
 const DATE_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
   "invalid-value": {
     editableTitle: "Invalid Date Value",
@@ -208,6 +234,10 @@ function isBooleanValidation(validationType: SummaryValidationType) {
   return validationType === "boolean";
 }
 
+function isGapsValidation(validationType: SummaryValidationType) {
+  return validationType === "gaps";
+}
+
 function isNumericValidation(validationType: SummaryValidationType) {
   return validationType === "numeric";
 }
@@ -218,6 +248,10 @@ function getPanelCopy(
 ): PanelCopy {
   if (validationType === "boolean") {
     return BOOLEAN_ERROR_COPY[errorType as ListSummaryErrorType];
+  }
+
+  if (validationType === "gaps") {
+    return GAPS_ERROR_COPY[errorType as GapsSummaryErrorType];
   }
 
   if (validationType === "date") {
@@ -1133,6 +1167,10 @@ export function SummaryPanel({
   defaultNewDecimalLimit = "",
   valueOptions = DEMO_VALUE_OPTIONS,
   booleanValueOptions = DEMO_BOOLEAN_VALUE_OPTIONS,
+  toValue: toValueProp,
+  fromValue: fromValueProp,
+  toLabel: toLabelProp,
+  fromLabel: fromLabelProp,
   dateFormat: dateFormatProp,
   dateTimeFormat: dateTimeFormatProp,
   holeOptions = DEMO_HOLE_OPTIONS,
@@ -1175,7 +1213,18 @@ export function SummaryPanel({
             ? DEMO_DATE_INVALID_VALUE
             : validationType === "date-time"
               ? DEMO_DATE_TIME_INVALID_VALUE
+              : validationType === "gaps"
+                ? DEMO_INVALID_VALUE
               : DEMO_INVALID_VALUE);
+  const resolvedToValue = toValueProp ?? DEMO_GAPS_TO_VALUE;
+  const resolvedFromValue = fromValueProp ?? DEMO_GAPS_FROM_VALUE;
+  const resolvedToLabel = toLabelProp ?? DEMO_GAPS_TO_LABEL;
+  const resolvedFromLabel = fromLabelProp ?? DEMO_GAPS_FROM_LABEL;
+  const originalGapsValuesRef = useRef({
+    toValue: resolvedToValue,
+    fromValue: resolvedFromValue,
+  });
+  const originalGapsValues = originalGapsValuesRef.current;
   const dateFormat = dateFormatProp ?? DEMO_DATE_FORMAT;
   const dateTimeFormat = dateTimeFormatProp ?? DEMO_DATE_TIME_FORMAT;
   const characterLimit = characterLimitProp ?? DEMO_CHARACTER_LIMIT;
@@ -1188,7 +1237,7 @@ export function SummaryPanel({
     defaultDecimalLimitResolutionProp ?? "round-to-limit";
   const originalExceededLimitTextRef = useRef(
     getOriginalExceededLimitCellText(
-      exceededLimitCellTextProp,
+      exceededLimitCellTextProp ?? DEMO_EXCEEDED_CHARACTER_LIMIT_TEXT,
       enteredCharacterCountProp ?? DEMO_ENTERED_CHARACTER_COUNT,
     ),
   );
@@ -1219,6 +1268,8 @@ export function SummaryPanel({
               ? DEMO_DATE_CELL_COUNT
               : validationType === "date-time"
                 ? DEMO_DATE_TIME_CELL_COUNT
+                : validationType === "gaps"
+                  ? DEMO_GAPS_CELL_COUNT
                 : DEMO_CELL_COUNT);
   const holeCount =
     holeCountProp ??
@@ -1236,6 +1287,8 @@ export function SummaryPanel({
               ? DEMO_DATE_HOLE_COUNT
               : validationType === "date-time"
                 ? DEMO_DATE_TIME_HOLE_COUNT
+                : validationType === "gaps"
+                  ? DEMO_GAPS_HOLE_COUNT
                 : DEMO_HOLE_COUNT);
   const defaultBooleanValue = booleanValueOptions[0]?.value ?? "";
   const initialStagedValue =
@@ -1254,6 +1307,8 @@ export function SummaryPanel({
             ? DEMO_DATE_INITIAL_STAGED_VALUE
             : validationType === "date-time"
               ? DEMO_DATE_TIME_INITIAL_STAGED_VALUE
+              : validationType === "gaps"
+                ? getGapsStagedValue(resolvedToValue, resolvedFromValue)
               : "bnd");
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const isCollapsedControlled = collapsedProp !== undefined;
@@ -1269,6 +1324,9 @@ export function SummaryPanel({
   // When opening in staged/approved, seed inputs from initialStagedValue instead of empty.
   const opensInCommittedState =
     defaultPanelState === "staged" || defaultPanelState === "approved";
+  const initialGapsValues = opensInCommittedState
+    ? parseGapsStagedValue(initialStagedValue)
+    : { toValue: resolvedToValue, fromValue: resolvedFromValue };
 
   const [panelState, setPanelState] = useState<SummaryPanelState>(defaultPanelState);
   const [valueInputMode, setValueInputMode] = useState<ValueInputMode>("select");
@@ -1282,6 +1340,8 @@ export function SummaryPanel({
   const [textValue, setTextValue] = useState(
     opensInCommittedState ? initialStagedValue : "",
   );
+  const [gapsToValue, setGapsToValue] = useState(initialGapsValues.toValue);
+  const [gapsFromValue, setGapsFromValue] = useState(initialGapsValues.fromValue);
   const [customValue, setCustomValue] = useState("");
   const [stagedValue, setStagedValue] = useState(
     opensInCommittedState ? initialStagedValue : "",
@@ -1327,12 +1387,13 @@ export function SummaryPanel({
   );
 
   const isSingleCellError = cellCount <= 1;
+  const isGaps = isGapsValidation(validationType);
 
   useEffect(() => {
-    if (isSingleCellError) {
+    if (isSingleCellError || isGaps) {
       setApplyScope("cell");
     }
-  }, [isSingleCellError]);
+  }, [isSingleCellError, isGaps]);
 
   const isApproved = panelState === "approved";
   const isStaged = panelState === "staged";
@@ -1391,6 +1452,28 @@ export function SummaryPanel({
     (trimmedDateTimeValue !== "" &&
       isValidDateTimeForFormat(trimmedDateTimeValue, dateTimeFormat));
 
+  const trimmedGapsToValue = isGaps ? gapsToValue.trim() : "";
+  const trimmedGapsFromValue = isGaps ? gapsFromValue.trim() : "";
+  const isGapsValueCommittable =
+    !isGaps || isValidGapsResolution(gapsToValue, gapsFromValue);
+  const showGapsToError =
+    isGaps &&
+    trimmedGapsToValue !== "" &&
+    (!isValidGapsValue(trimmedGapsToValue) ||
+      (trimmedGapsFromValue !== "" &&
+        isValidGapsValue(trimmedGapsFromValue) &&
+        !areGapsValuesEqual(trimmedGapsToValue, trimmedGapsFromValue)));
+  const showGapsFromError =
+    isGaps &&
+    trimmedGapsFromValue !== "" &&
+    (!isValidGapsValue(trimmedGapsFromValue) ||
+      (trimmedGapsToValue !== "" &&
+        isValidGapsValue(trimmedGapsToValue) &&
+        !areGapsValuesEqual(trimmedGapsToValue, trimmedGapsFromValue)));
+  const displayedGapsGap = computeGapsGap(gapsToValue, gapsFromValue);
+  const showCurrentGapsGap =
+    isGaps && isEditable && displayedGapsGap !== null && displayedGapsGap > 0;
+
   const currentValue = isExceededLimit
     ? getExceededLimitStagedValue(characterLimitResolution, newCharacterLimit)
     : isNumericDecimalLimitResolution
@@ -1399,6 +1482,8 @@ export function SummaryPanel({
           newDecimalLimit,
           manualNumericValue,
         )
+      : isGaps
+        ? getGapsStagedValue(gapsToValue, gapsFromValue)
       : validationType === "text" ||
           validationType === "date" ||
           validationType === "date-time" ||
@@ -1423,6 +1508,8 @@ export function SummaryPanel({
           ? isDateTimeValueCommittable
           : isDate
             ? isDateValueCommittable
+            : isGaps
+              ? isGapsValueCommittable
             : isNumeric
               ? isNumericValueCommittable
               : currentValue !== "");
@@ -1442,11 +1529,14 @@ export function SummaryPanel({
           ? isDateTimeValueCommittable
           : isDate
             ? isDateValueCommittable
+            : isGaps
+              ? isGapsValueCommittable
             : isNumeric
               ? isNumericValueCommittable
               : currentValue !== ""
   );
 
+  const stagedGapsValues = parseGapsStagedValue(stagedValue);
   const stagedAsText = isExceededLimit
     ? getExceededLimitStagedAsDisplayText(
         isApproved,
@@ -1470,6 +1560,13 @@ export function SummaryPanel({
           decimalMax,
           invalidValue,
         )
+      : isGaps
+        ? formatGapsValuesSummary(
+            resolvedToLabel,
+            stagedGapsValues.toValue,
+            resolvedFromLabel,
+            stagedGapsValues.fromValue,
+          )
       : isBoolean
         ? resolveBooleanDisplayValue(stagedValue, booleanValueOptions)
         : validationType === "list"
@@ -1480,6 +1577,13 @@ export function SummaryPanel({
     ? originalExceededLimitText
     : isNumericDecimalLimitResolution
       ? invalidValue
+      : isGaps
+        ? formatGapsValuesSummary(
+            resolvedToLabel,
+            originalGapsValues.toValue,
+            resolvedFromLabel,
+            originalGapsValues.fromValue,
+          )
       : previousValueLabel;
 
   const applyImpact = useMemo(
@@ -1801,6 +1905,42 @@ export function SummaryPanel({
     return "Enter Updated Value";
   };
 
+  const renderGapsResolutionFields = () => (
+    <>
+      {showCurrentGapsGap && (
+        <div className={styles.gapsCurrentGapBanner}>
+          <p className={styles.gapsCurrentGapText}>
+            Current gap: {formatGapsGap(displayedGapsGap!)}
+          </p>
+        </div>
+      )}
+      <div className={styles.gapsFields}>
+        <TextField
+          className={styles.gapsField}
+          label={resolvedToLabel}
+          placeholder=""
+          value={gapsToValue}
+          onChange={(event) => setGapsToValue(event.target.value)}
+          disabled={isApproved}
+          error={showGapsToError}
+          errorMessage={getGapsFieldErrorMessage(gapsToValue, gapsFromValue)}
+          aria-label={resolvedToLabel}
+        />
+        <TextField
+          className={styles.gapsField}
+          label={resolvedFromLabel}
+          placeholder=""
+          value={gapsFromValue}
+          onChange={(event) => setGapsFromValue(event.target.value)}
+          disabled={isApproved}
+          error={showGapsFromError}
+          errorMessage={getGapsFieldErrorMessage(gapsFromValue, gapsToValue)}
+          aria-label={resolvedFromLabel}
+        />
+      </div>
+    </>
+  );
+
   const renderBooleanValueField = () => (
     <div className={styles.resolutionSection}>
       <p className={styles.resolutionLabel}>Choose a value</p>
@@ -1830,7 +1970,7 @@ export function SummaryPanel({
   );
 
   const renderValueField = () => {
-    if (isExceededLimit || isNumericDecimalLimitResolution) {
+    if (isExceededLimit || isNumericDecimalLimitResolution || isGaps) {
       return null;
     }
 
@@ -2013,13 +2153,15 @@ export function SummaryPanel({
                 {isEditable && (
                   <>
                     <p className={styles.summaryText}>
-                      {getSummaryMessage(
-                        validationType,
-                        errorType,
-                        invalidValue,
-                        cellCount,
-                        holeCount,
-                      )}
+                      {isGaps
+                        ? getGapsSummaryMessage(resolvedFromLabel, resolvedToLabel)
+                        : getSummaryMessage(
+                            validationType,
+                            errorType,
+                            invalidValue,
+                            cellCount,
+                            holeCount,
+                          )}
                     </p>
                     {panelCopy.helperText && (
                       <p className={styles.helperText}>{panelCopy.helperText}</p>
@@ -2036,7 +2178,7 @@ export function SummaryPanel({
                   stagedAsHeading="STAGED AS"
                   stagedAsText={stagedAsText}
                   previouslyText={previouslyText}
-                  quoteValues={!isBoolean}
+                  quoteValues={!isBoolean && !isGaps}
                 />
               )}
 
@@ -2048,7 +2190,7 @@ export function SummaryPanel({
                   stagedAsHeading="APPROVED AS"
                   stagedAsText={stagedAsText}
                   previouslyText={previouslyText}
-                  quoteValues={!isBoolean}
+                  quoteValues={!isBoolean && !isGaps}
                 />
               )}
 
@@ -2063,6 +2205,8 @@ export function SummaryPanel({
                   {decimalLimitResolution === "increase-limit" && renderNewDecimalLimitField()}
                   {decimalLimitResolution === "adjust-manually" && renderManualNumericValueField()}
                 </>
+              ) : isGaps ? (
+                renderGapsResolutionFields()
               ) : isBoolean ? (
                 renderBooleanValueField()
               ) : (
@@ -2070,6 +2214,7 @@ export function SummaryPanel({
               )}
             </div>
 
+            {!isGaps && (
             <div className={applySectionClassNames}>
               <SegmentedControl
                 className={styles.segmentedControl}
@@ -2099,6 +2244,7 @@ export function SummaryPanel({
                 </div>
               )}
             </div>
+            )}
           </div>
 
           <div className={styles.footer}>

@@ -239,13 +239,15 @@ export function MyView() {
   );
 }
 
-// validationType: "list" | "text" | "boolean" | "date" | "date-time" | "numeric"
+// validationType: "list" | "text" | "boolean" | "date" | "date-time" | "numeric" | "gaps"
 // errorType: list/boolean/date/date-time → "invalid-value" | "missing-value"
 //            text → "exceeded-character-limit" | "value-required"
 //            numeric → "exceeded-decimal-limit" | "exceeded-decimal-below-min"
 //                       | "exceeded-decimal-above-max" | ... ; dual errors use a
 //                       validated value field (decimal max + min/max)
+//            gaps → "gaps-not-allowed"
 // boolean: pass booleanValueOptions (dynamic labels/values)
+// gaps: pass toValue, fromValue, toLabel, fromLabel (column headers from your table)
 // date: pass dateFormat from column schema (e.g. "yyyy/mm/dd"); panel validates input
 // date-time: pass dateTimeFormat (e.g. "yyyy/mm/dd hh:mm:ss"); panel validates input
 // text: pass characterLimit, exceededLimitCellText, enteredCharacterCount

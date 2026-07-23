@@ -106,3 +106,10 @@ export const DEMO_NUMERIC_EXCEEDED_DECIMAL_ABOVE_MAX_CELL_COUNT = 5;
 export const DEMO_NUMERIC_INITIAL_STAGED_VALUE = "12.35";
 export const DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION = 6;
 export const DEMO_DEFAULT_NEW_DECIMAL_LIMIT = "4";
+
+export const DEMO_GAPS_TO_VALUE = "96.0";
+export const DEMO_GAPS_FROM_VALUE = "100.0";
+export const DEMO_GAPS_TO_LABEL = "To";
+export const DEMO_GAPS_FROM_LABEL = "From";
+export const DEMO_GAPS_CELL_COUNT = 5;
+export const DEMO_GAPS_HOLE_COUNT = 2;

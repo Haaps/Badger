@@ -359,6 +359,37 @@
   width: 100%;
 }
 
+.gapsCurrentGapBanner {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--padding-x-small) var(--padding-small);
+  border-radius: var(--corner-radius-small);
+  background: var(--orange-25);
+}
+
+.gapsCurrentGapText {
+  margin: 0;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-base-regular-font-size);
+  font-weight: var(--typography-base-regular-font-weight);
+  line-height: var(--typography-base-regular-line-height);
+  letter-spacing: var(--typography-base-regular-letter-spacing);
+  color: var(--neutral-500);
+  word-break: break-word;
+}
+
+.gapsFields {
+  display: flex;
+  gap: var(--padding-medium);
+  width: 100%;
+}
+
+.gapsField {
+  flex: 1;
+  min-width: 0;
+}
+
 .characterLimitInputSection {
   display: flex;
   flex-direction: column;
