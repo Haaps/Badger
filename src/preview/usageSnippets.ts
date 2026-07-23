@@ -269,8 +269,8 @@ export function MyView() {
   );
 }
 
-// Gallery demo uses list validation only. In your app, pass validationType,
-// errorType, and type-specific SummaryPanel props per column when wiring
+// Gallery demo rows include validationType, errorType, and panelProps on error
+// cells. In your app, attach the same metadata per cell when wiring
 // DataTable + SummaryPanel yourself.`,
 };
 

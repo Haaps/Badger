@@ -125,7 +125,7 @@
 
 .headerRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--padding-x-small);
   width: 100%;
@@ -133,19 +133,16 @@
 
 .title {
   margin: 0;
+  flex: 1;
+  min-width: 0;
   font-family: var(--typography-font-family);
   font-size: var(--typography-base-bold-font-size);
   font-weight: var(--typography-base-bold-font-weight);
   line-height: var(--typography-base-bold-line-height);
   letter-spacing: var(--typography-base-bold-letter-spacing);
   color: var(--neutral-500);
-  white-space: nowrap;
-}
-
-.titleWrap {
-  flex: 1;
-  min-width: 0;
   white-space: normal;
+  word-break: break-word;
 }
 
 .titleError {
@@ -196,6 +193,7 @@
   line-height: var(--typography-base-regular-line-height);
   letter-spacing: var(--typography-base-regular-letter-spacing);
   color: var(--neutral-500);
+  white-space: normal;
   word-break: break-word;
 }
 

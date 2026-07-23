@@ -86,8 +86,16 @@ export function getGapsFieldErrorMessage(value: string, otherValue: string) {
   return "Must be numeric";
 }
 
-export function getGapsSummaryMessage(fromLabel: string, toLabel: string) {
-  return `The ${fromLabel} and ${toLabel} values must be equal. Adjust one or both to remove the gap.`;
+export function getGapsSummaryMessage(
+  fromLabel: string,
+  toLabel: string,
+  selectedField: "to" | "from" = "from",
+) {
+  if (selectedField === "to") {
+    return `The ${toLabel} value in this row must match the ${fromLabel} value in the row below. Adjust one or both to remove the gap.`;
+  }
+
+  return `The ${toLabel} value in the row above must match the ${fromLabel} value in the row below. Adjust one or both to remove the gap.`;
 }
 
 export function formatGapsValuesSummary(toLabel: string, toValue: string, fromLabel: string, fromValue: string) {

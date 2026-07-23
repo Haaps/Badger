@@ -120,6 +120,8 @@ export type SummaryPanelProps = {
   toLabel?: string;
   /** From column header label used in summary copy and the From field label. */
   fromLabel?: string;
+  /** Which gaps cell is selected — adjusts summary copy to this row vs adjacent row. */
+  gapsSelectedField?: "to" | "from";
   /**
    * Required date format hint shown beside the Date field label (e.g. "yyyy/mm/dd").
    * Defined by the platform column schema. The panel validates input against this format.

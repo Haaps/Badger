@@ -8,6 +8,7 @@ import {
   StagedInactiveIcon,
 } from "../icons";
 import type { StatusFilter } from "../FilterBar.types";
+import styles from "./StatusIcon.module.css";
 
 type IconComponent = ComponentType<{ className?: string }>;
 
@@ -30,5 +31,12 @@ type StatusIconProps = {
 export function StatusIcon({ variant, active, className }: StatusIconProps) {
   const Icon = active ? ICONS[variant].active : ICONS[variant].inactive;
 
-  return <Icon className={className} />;
+  return (
+    <span
+      className={[styles.root, className].filter(Boolean).join(" ")}
+      aria-hidden="true"
+    >
+      <Icon />
+    </span>
+  );
 }

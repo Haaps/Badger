@@ -403,10 +403,11 @@ export function SummaryPanelGapsPage() {
       validationType="gaps"
       defaultErrorType="gaps-not-allowed"
       title="Gaps"
-      description="Summary panel for gaps validation errors. Adjust the To and From values so they match before staging and approving."
+      description="Summary panel for gaps validation errors. The To value in the row above must match the From value in the row below — adjust one or both so they are equal before staging and approving."
       panelHeight={880}
       hints={[
-        "The current gap banner shows the difference between the To and From values.",
+        "A gap exists when the To value in one row does not match the From value in the next row (demo: 30.0 vs 40.0 = gap of 10.0).",
+        "Click the To or From error cell — summary copy reflects which cell you selected.",
         "Enter matching numeric values in both fields — Stage Change enables when they are equal.",
         "Field errors appear for invalid numbers or when the values still do not match.",
         "Click the SUMMARY bar to collapse and expand the panel.",
