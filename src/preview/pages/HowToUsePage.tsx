@@ -240,8 +240,8 @@ export function HowToUsePage() {
                 <code>above-max-value</code>
               </td>
               <td>
-                Round / increase decimal limit / manual value; dual errors also
-                support set-to-minimum or set-to-maximum
+                Round / increase decimal limit / manual value; dual errors use a
+                single validated value field
               </td>
               <td>
                 <code>decimalMax</code>, <code>minValue</code>,{" "}

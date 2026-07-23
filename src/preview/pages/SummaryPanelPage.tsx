@@ -40,7 +40,6 @@ type SummaryPanelDemoPageProps = {
   renderExtraControls?: (errorType: SummaryErrorType) => ReactNode;
   extraPanelKey?: string;
   demoColumnClassName?: string;
-  banner?: ReactNode;
 };
 
 function SummaryPanelCellCountControls({
@@ -74,7 +73,6 @@ function SummaryPanelDemoPage({
   renderExtraControls,
   extraPanelKey = "",
   demoColumnClassName,
-  banner,
 }: SummaryPanelDemoPageProps) {
   const [panelKey, setPanelKey] = useState(0);
   const [errorType, setErrorType] = useState<SummaryErrorType>(defaultErrorType);
@@ -97,8 +95,6 @@ function SummaryPanelDemoPage({
         <h2 className={styles.name}>{title}</h2>
         <p className={styles.description}>{description}</p>
       </header>
-
-      {banner}
 
       <section className={styles.stage} aria-label="Summary panel preview">
         <div className={styles.interactive}>
@@ -333,11 +329,6 @@ export function SummaryPanelNumericPage() {
       title="Numeric validation"
       description="Summary panel for numeric validation errors. Choose a validation scenario, then choose a resolution or enter a corrected value before staging and approving."
       panelHeight={880}
-      banner={
-        <p className={styles.inProgressBanner} role="status">
-          In progress — still working this one out.
-        </p>
-      }
       getPanelProps={(errorType) => {
         const shared = { decimalMax: DEMO_DECIMAL_MAX };
 
@@ -391,8 +382,8 @@ export function SummaryPanelNumericPage() {
       hints={[
         "Use the validation scenario dropdown to switch between all seven numeric error types.",
         CELL_COUNT_HINT,
-        "For exceeded decimal limit (including decimal + min/max combinations), choose a resolution that fixes both errors.",
-        "Dual-error scenarios offer Set to minimum/maximum value or adjust manually; increasing the decimal limit alone cannot resolve min/max violations.",
+        "For exceeded decimal limit, choose Round to current decimal limit, Increase max decimal limit, or Adjust value manually.",
+        "Dual-error scenarios (decimal limit + min/max) use a single Enter Updated Value field validated against all constraints.",
         "When increasing the decimal limit, enter a new limit — Stage Change enables when valid.",
         "With Apply to drill holes selected, a warning appears if the new limit is still below some selected cell decimal counts.",
         "Enter a valid numeric value — Stage Change enables when input passes validation.",

@@ -243,8 +243,8 @@ export function MyView() {
 // errorType: list/boolean/date/date-time → "invalid-value" | "missing-value"
 //            text → "exceeded-character-limit" | "value-required"
 //            numeric → "exceeded-decimal-limit" | "exceeded-decimal-below-min"
-//                       | "exceeded-decimal-above-max" | ... ; dual errors support
-//                       set-to-minimum / set-to-maximum resolutions
+//                       | "exceeded-decimal-above-max" | ... ; dual errors use a
+//                       validated value field (decimal max + min/max)
 // boolean: pass booleanValueOptions (dynamic labels/values)
 // date: pass dateFormat from column schema (e.g. "yyyy/mm/dd"); panel validates input
 // date-time: pass dateTimeFormat (e.g. "yyyy/mm/dd hh:mm:ss"); panel validates input
