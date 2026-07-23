@@ -22,18 +22,6 @@
   color: #666666;
 }
 
-.inProgressBanner {
-  margin: -24px 0 32px;
-  padding: 10px 14px;
-  max-width: 640px;
-  border: 1px solid #f0d9a8;
-  border-radius: 8px;
-  background: #fff8eb;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #8a6116;
-}
-
 .stage {
   padding: 48px;
   border: 1px solid #e8e8e8;

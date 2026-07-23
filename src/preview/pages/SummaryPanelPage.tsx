@@ -40,7 +40,6 @@ type SummaryPanelDemoPageProps = {
   renderExtraControls?: (errorType: SummaryErrorType) => ReactNode;
   extraPanelKey?: string;
   demoColumnClassName?: string;
-  banner?: ReactNode;
 };
 
 function SummaryPanelCellCountControls({
@@ -74,7 +73,6 @@ function SummaryPanelDemoPage({
   renderExtraControls,
   extraPanelKey = "",
   demoColumnClassName,
-  banner,
 }: SummaryPanelDemoPageProps) {
   const [panelKey, setPanelKey] = useState(0);
   const [errorType, setErrorType] = useState<SummaryErrorType>(defaultErrorType);
@@ -97,8 +95,6 @@ function SummaryPanelDemoPage({
         <h2 className={styles.name}>{title}</h2>
         <p className={styles.description}>{description}</p>
       </header>
-
-      {banner}
 
       <section className={styles.stage} aria-label="Summary panel preview">
         <div className={styles.interactive}>
@@ -333,11 +329,6 @@ export function SummaryPanelNumericPage() {
       title="Numeric validation"
       description="Summary panel for numeric validation errors. Choose a validation scenario, then choose a resolution or enter a corrected value before staging and approving."
       panelHeight={880}
-      banner={
-        <p className={styles.inProgressBanner} role="status">
-          In progress — still working this one out.
-        </p>
-      }
       getPanelProps={(errorType) => {
         const shared = { decimalMax: DEMO_DECIMAL_MAX };
 
