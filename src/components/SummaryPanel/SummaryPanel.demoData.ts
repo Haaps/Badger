@@ -113,3 +113,17 @@ export const DEMO_GAPS_TO_LABEL = "To";
 export const DEMO_GAPS_FROM_LABEL = "From";
 export const DEMO_GAPS_CELL_COUNT = 5;
 export const DEMO_GAPS_HOLE_COUNT = 2;
+
+export const DEMO_DUPLICATES_TO_VALUE = "280.0";
+export const DEMO_DUPLICATES_FROM_VALUE = "270.0";
+export const DEMO_DUPLICATES_TO_LABEL = "To";
+export const DEMO_DUPLICATES_FROM_LABEL = "From";
+export const DEMO_DUPLICATES_ROW_COUNT = 2;
+export const DEMO_DUPLICATES_HOLE_COUNT = 2;
+
+export const DEMO_OVERLAPS_TO_VALUE = "280.0";
+export const DEMO_OVERLAPS_FROM_VALUE = "278.0";
+export const DEMO_OVERLAPS_TO_LABEL = "To";
+export const DEMO_OVERLAPS_FROM_LABEL = "From";
+export const DEMO_OVERLAPS_CELL_COUNT = 2;
+export const DEMO_OVERLAPS_HOLE_COUNT = 0;

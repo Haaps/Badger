@@ -14,6 +14,12 @@ import {
   DEMO_GAPS_FROM_VALUE,
   DEMO_GAPS_TO_LABEL,
   DEMO_GAPS_TO_VALUE,
+  DEMO_DUPLICATES_FROM_LABEL,
+  DEMO_DUPLICATES_TO_LABEL,
+  DEMO_OVERLAPS_FROM_LABEL,
+  DEMO_OVERLAPS_FROM_VALUE,
+  DEMO_OVERLAPS_TO_LABEL,
+  DEMO_OVERLAPS_TO_VALUE,
   DEMO_MAX_ENTERED_DECIMAL_COUNT_IN_SELECTION,
   DEMO_NUMERIC_ABOVE_MAX_VALUE,
   DEMO_NUMERIC_BELOW_MIN_VALUE,
@@ -199,6 +205,79 @@ function createGapsPairCells(
   };
 }
 
+const DUPLICATE_INTERVAL_FROM = 270;
+const DUPLICATE_INTERVAL_TO = 280;
+const DUPLICATE_INTERVAL_KEY = `${formatDepth(DUPLICATE_INTERVAL_FROM)}|${formatDepth(DUPLICATE_INTERVAL_TO)}`;
+
+function createDuplicatesIntervalCells(from: number, to: number) {
+  const fromValue = formatDepth(from);
+  const toValue = formatDepth(to);
+  const panelProps = {
+    toValue,
+    fromValue,
+    toLabel: DEMO_DUPLICATES_TO_LABEL,
+    fromLabel: DEMO_DUPLICATES_FROM_LABEL,
+  };
+  const shared = {
+    validationType: "duplicates" as const,
+    errorType: "duplicates-not-allowed" as const,
+    status: "error" as const,
+    panelState: "editable" as const,
+    invalidValue: DUPLICATE_INTERVAL_KEY,
+    cellCount: 2,
+    holeCount: 2,
+    panelProps,
+  };
+
+  return {
+    from: {
+      ...shared,
+      value: fromValue,
+    },
+    to: {
+      ...shared,
+      value: toValue,
+    },
+    length: formatDepth(to - from),
+  };
+}
+
+function createOverlapsPairCells(
+  toRowId: string,
+  fromRowId: string,
+  toValue: string,
+  fromValue: string,
+): { toCell: DataTableCellValue; fromCell: DataTableCellValue } {
+  const panelProps = {
+    toLabel: DEMO_OVERLAPS_TO_LABEL,
+    fromLabel: DEMO_OVERLAPS_FROM_LABEL,
+  };
+  const shared = {
+    validationType: "overlaps" as const,
+    errorType: "overlaps-not-allowed" as const,
+    status: "error" as const,
+    panelState: "editable" as const,
+    cellCount: 2,
+    holeCount: 0,
+    panelProps,
+  };
+
+  return {
+    toCell: {
+      ...shared,
+      value: toValue,
+      invalidValue: toValue,
+      gapsPartner: { rowId: fromRowId, columnId: "from" },
+    },
+    fromCell: {
+      ...shared,
+      value: fromValue,
+      invalidValue: fromValue,
+      gapsPartner: { rowId: toRowId, columnId: "to" },
+    },
+  };
+}
+
 function createIntervalRow(
   id: string,
   from: number,
@@ -226,7 +305,17 @@ const GAPS_PAIR = createGapsPairCells(
   DEMO_GAPS_FROM_VALUE,
 );
 
-/** Intervals run 0→10, 10→20, 20→30, then a gap (30 vs 40), then validation errors continue 50→60, … */
+const OVERLAPS_INTERVAL_END_ROW_ID = "validation-overlaps-interval-end";
+const OVERLAPS_INTERVAL_START_ROW_ID = "validation-overlaps-interval-start";
+
+const OVERLAPS_PAIR = createOverlapsPairCells(
+  OVERLAPS_INTERVAL_END_ROW_ID,
+  OVERLAPS_INTERVAL_START_ROW_ID,
+  DEMO_OVERLAPS_TO_VALUE,
+  DEMO_OVERLAPS_FROM_VALUE,
+);
+
+/** Intervals run 0→10, 10→20, 20→30, then a gap (30 vs 40), overlap (280 vs 278), then validation errors continue 50→60, … */
 export const DEMO_TABLE_ROWS: DataTableRow[] = [
   createIntervalRow("validation-interval-0-10", 0, 10, DEMO_TABLE_HOLE_NUMBERS[0]),
   createIntervalRow("validation-interval-10-20", 10, 20, DEMO_TABLE_HOLE_NUMBERS[0]),
@@ -235,6 +324,12 @@ export const DEMO_TABLE_ROWS: DataTableRow[] = [
   }),
   createIntervalRow(GAPS_INTERVAL_START_ROW_ID, 40, 50, DEMO_TABLE_HOLE_NUMBERS[0], {
     from: GAPS_PAIR.fromCell,
+  }),
+  createIntervalRow(OVERLAPS_INTERVAL_END_ROW_ID, 270, 280, DEMO_TABLE_HOLE_NUMBERS[1], {
+    to: OVERLAPS_PAIR.toCell,
+  }),
+  createIntervalRow(OVERLAPS_INTERVAL_START_ROW_ID, 278, 290, DEMO_TABLE_HOLE_NUMBERS[1], {
+    from: OVERLAPS_PAIR.fromCell,
   }),
   ...DEMO_TABLE_HOLE_NUMBERS.slice(0, 8).map((holeNumber, index) =>
     createIntervalRow(
@@ -349,4 +444,18 @@ export const DEMO_TABLE_ROWS: DataTableRow[] = [
   createIntervalRow("validation-numeric-above-max", 260, 270, DEMO_TABLE_HOLE_NUMBERS[3], {
     assayAu: createNumericErrorCell("above-max-value", DEMO_NUMERIC_ABOVE_MAX_VALUE),
   }),
+  createIntervalRow(
+    "validation-duplicates-a",
+    DUPLICATE_INTERVAL_FROM,
+    DUPLICATE_INTERVAL_TO,
+    DEMO_TABLE_HOLE_NUMBERS[4],
+    createDuplicatesIntervalCells(DUPLICATE_INTERVAL_FROM, DUPLICATE_INTERVAL_TO),
+  ),
+  createIntervalRow(
+    "validation-duplicates-b",
+    DUPLICATE_INTERVAL_FROM,
+    DUPLICATE_INTERVAL_TO,
+    DEMO_TABLE_HOLE_NUMBERS[5],
+    createDuplicatesIntervalCells(DUPLICATE_INTERVAL_FROM, DUPLICATE_INTERVAL_TO),
+  ),
 ];

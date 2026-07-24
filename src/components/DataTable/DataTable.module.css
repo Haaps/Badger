@@ -87,6 +87,40 @@
   filter: brightness(0.98);
 }
 
+.bodyRowPendingDeletion td {
+  position: relative;
+}
+
+.bodyRowPendingDeletion td::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    #e0e0e0 0,
+    #e0e0e0 1px,
+    transparent 1px,
+    transparent 8px
+  );
+  background-attachment: fixed;
+  z-index: 1;
+}
+
+.bodyRowPendingDeletion td > * {
+  position: relative;
+  z-index: 0;
+  opacity: 0.5;
+}
+
+.bodyRowPendingDeletion:hover .cell:not(.cellStatus) {
+  background: var(--neutral-0);
+}
+
+.bodyRowPendingDeletion:hover .cellStatus {
+  filter: none;
+}
+
 .cell {
   height: 52px;
   padding: var(--padding-medium);

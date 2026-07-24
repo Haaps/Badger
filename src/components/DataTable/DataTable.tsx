@@ -11,6 +11,7 @@ import type { StatusFilter } from "../FilterBar";
 import {
   SummaryPanel,
   parseGapsStagedValue,
+  parseDuplicatesStagedValue,
   getExceededLimitResultText,
   getExceededDecimalLimitResultText,
 } from "../SummaryPanel";
@@ -337,11 +338,14 @@ function getCellDisplayValue(cell: DataTableCellValue | string | undefined) {
   return cell ?? "";
 }
 
-function getGapsPairLocations(
+function getIntervalBoundaryPairLocations(
   selectedCell: SelectedTableCell,
 ): { toRowId: string; fromRowId: string } | null {
   const { cell, rowId, columnId } = selectedCell;
-  if (cell.validationType !== "gaps" || !cell.gapsPartner) {
+  if (
+    (cell.validationType !== "gaps" && cell.validationType !== "overlaps") ||
+    !cell.gapsPartner
+  ) {
     return null;
   }
 
@@ -357,8 +361,8 @@ function getGapsPairLocations(
 }
 
 function getGapsSummaryContext(rows: DataTableRow[], selectedCell: SelectedTableCell) {
-  const pair = getGapsPairLocations(selectedCell);
-  if (!pair) {
+  const pair = getIntervalBoundaryPairLocations(selectedCell);
+  if (!pair || selectedCell.cell.validationType !== "gaps") {
     return null;
   }
 
@@ -382,17 +386,67 @@ function getGapsSummaryContext(rows: DataTableRow[], selectedCell: SelectedTable
     holeCount: anchorCell.holeCount ?? 0,
     toLabel: anchorCell.panelProps?.toLabel,
     fromLabel: anchorCell.panelProps?.fromLabel,
+    intervalCrossValidation: buildIntervalCrossValidationContext(
+      rows,
+      new Set([pair.toRowId, pair.fromRowId]),
+      {
+        gapAboveRowFrom: getCellDisplayValue(toRow?.cells.from),
+        gapBelowRowTo: getCellDisplayValue(fromRow?.cells.to),
+      },
+    ),
   };
 }
 
-function applyGapsPanelChangeToRows(
+function getOverlapsSummaryContext(rows: DataTableRow[], selectedCell: SelectedTableCell) {
+  const pair = getIntervalBoundaryPairLocations(selectedCell);
+  if (!pair || selectedCell.cell.validationType !== "overlaps") {
+    return null;
+  }
+
+  const toRow = rows.find((row) => row.id === pair.toRowId);
+  const fromRow = rows.find((row) => row.id === pair.fromRowId);
+  const toCell = toRow?.cells.to;
+  const fromCell = fromRow?.cells.from;
+  const anchorCell =
+    typeof fromCell === "object"
+      ? fromCell
+      : typeof toCell === "object"
+        ? toCell
+        : selectedCell.cell;
+
+  return {
+    toValue: getCellDisplayValue(toCell),
+    fromValue: getCellDisplayValue(fromCell),
+    defaultPanelState: anchorCell.panelState ?? "editable",
+    initialStagedValue: anchorCell.initialStagedValue,
+    cellCount: 2,
+    holeCount: anchorCell.holeCount ?? 0,
+    toLabel: anchorCell.panelProps?.toLabel,
+    fromLabel: anchorCell.panelProps?.fromLabel,
+    intervalCrossValidation: buildIntervalCrossValidationContext(
+      rows,
+      new Set([pair.toRowId, pair.fromRowId]),
+      {
+        gapAboveRowFrom: getCellDisplayValue(toRow?.cells.from),
+        gapBelowRowTo: getCellDisplayValue(fromRow?.cells.to),
+      },
+    ),
+  };
+}
+
+function applyIntervalBoundaryPanelChangeToRows(
   rows: DataTableRow[],
   selectedCell: SelectedTableCell,
   state: SummaryPanelState,
   stagedValue: string | undefined,
 ): DataTableRow[] {
-  const pair = getGapsPairLocations(selectedCell);
+  const pair = getIntervalBoundaryPairLocations(selectedCell);
   if (!pair) {
+    return rows;
+  }
+
+  const validationType = selectedCell.cell.validationType;
+  if (validationType !== "gaps" && validationType !== "overlaps") {
     return rows;
   }
 
@@ -412,7 +466,7 @@ function applyGapsPanelChangeToRows(
   return rows.map((row) => {
     if (row.id === pair.toRowId) {
       const toCell = row.cells.to;
-      if (typeof toCell !== "object" || toCell.validationType !== "gaps") {
+      if (typeof toCell !== "object" || toCell.validationType !== validationType) {
         return row;
       }
 
@@ -431,7 +485,7 @@ function applyGapsPanelChangeToRows(
 
     if (row.id === pair.fromRowId) {
       const fromCell = row.cells.from;
-      if (typeof fromCell !== "object" || fromCell.validationType !== "gaps") {
+      if (typeof fromCell !== "object" || fromCell.validationType !== validationType) {
         return row;
       }
 
@@ -452,6 +506,357 @@ function applyGapsPanelChangeToRows(
   });
 }
 
+function computeIntervalLength(fromValue: string, toValue: string) {
+  const from = Number.parseFloat(fromValue);
+  const to = Number.parseFloat(toValue);
+  if (!Number.isFinite(from) || !Number.isFinite(to)) {
+    return null;
+  }
+
+  return `${Math.abs(to - from).toFixed(1)}`;
+}
+
+function getRowIntervalKey(row: DataTableRow) {
+  return `${getCellDisplayValue(row.cells.from)}|${getCellDisplayValue(row.cells.to)}`;
+}
+
+function isDuplicateValidationRow(row: DataTableRow) {
+  return (
+    (typeof row.cells.from === "object" && row.cells.from.validationType === "duplicates") ||
+    (typeof row.cells.to === "object" && row.cells.to.validationType === "duplicates")
+  );
+}
+
+function getEffectiveDuplicateInterval(row: DataTableRow) {
+  for (const columnId of ["from", "to"] as const) {
+    const cell = row.cells[columnId];
+    if (typeof cell !== "object") {
+      continue;
+    }
+
+    if (
+      cell.initialStagedValue?.startsWith("edit:") &&
+      (cell.panelState === "staged" || cell.panelState === "approved")
+    ) {
+      const parsed = parseDuplicatesStagedValue(cell.initialStagedValue);
+      if (parsed.resolution === "edit-manually") {
+        return `${parsed.fromValue.trim()}|${parsed.toValue.trim()}`;
+      }
+    }
+  }
+
+  return getRowIntervalKey(row);
+}
+
+function clearDuplicateErrorsOnOtherRows(
+  rows: DataTableRow[],
+  intervalKey: string,
+  excludeRowId: string,
+) {
+  return rows.map((row) => {
+    if (row.id === excludeRowId || row.pendingDeletion || !isDuplicateValidationRow(row)) {
+      return row;
+    }
+
+    if (getEffectiveDuplicateInterval(row) !== intervalKey) {
+      return row;
+    }
+
+    const nextCells = { ...row.cells };
+
+    for (const columnId of ["from", "to"] as const) {
+      const cell = nextCells[columnId];
+      if (
+        typeof cell === "object" &&
+        cell.validationType === "duplicates" &&
+        !isDuplicateCellCommitted(cell)
+      ) {
+        nextCells[columnId] = cell.value;
+      }
+    }
+
+    return { ...row, cells: nextCells };
+  });
+}
+
+function getActiveRowIntervals(rows: DataTableRow[], excludeRowIds: Set<string>) {
+  return rows
+    .filter((row) => !row.pendingDeletion && !excludeRowIds.has(row.id))
+    .map((row) => getEffectiveDuplicateInterval(row));
+}
+
+function buildIntervalCrossValidationContext(
+  rows: DataTableRow[],
+  excludeRowIds: Set<string>,
+  neighbors: {
+    previousRowTo?: string;
+    nextRowFrom?: string;
+    gapAboveRowFrom?: string;
+    gapBelowRowTo?: string;
+  } = {},
+) {
+  return {
+    otherIntervals: getActiveRowIntervals(rows, excludeRowIds),
+    ...neighbors,
+  };
+}
+
+function extractDuplicateTemplate(
+  cell: DataTableCellValue | string | undefined,
+): Omit<DataTableCellValue, "value"> | null {
+  if (typeof cell !== "object" || cell.validationType !== "duplicates") {
+    return null;
+  }
+
+  const { value: _value, ...template } = cell;
+  return template;
+}
+
+function isDuplicateCellCommitted(cell: DataTableCellValue | string | undefined) {
+  return (
+    typeof cell === "object" &&
+    (cell.panelState === "staged" || cell.panelState === "approved")
+  );
+}
+
+/** Clears or restores duplicate errors based on duplicate-flagged row counts (ignores pendingDeletion rows). */
+function reconcileDuplicateErrors(rows: DataTableRow[]): DataTableRow[] {
+  const activeRows = rows.filter((row) => !row.pendingDeletion);
+  const duplicateActiveRows = activeRows.filter(isDuplicateValidationRow);
+  const intervalCounts = new Map<string, number>();
+  const intervalHoles = new Map<string, Set<string>>();
+  const intervalTemplates = new Map<string, Omit<DataTableCellValue, "value">>();
+
+  for (const row of rows) {
+    if (!isDuplicateValidationRow(row)) {
+      continue;
+    }
+
+    const key = getEffectiveDuplicateInterval(row);
+    const template =
+      extractDuplicateTemplate(row.cells.from) ?? extractDuplicateTemplate(row.cells.to);
+
+    if (template && !intervalTemplates.has(key)) {
+      intervalTemplates.set(key, template);
+    }
+  }
+
+  for (const row of duplicateActiveRows) {
+    const key = getEffectiveDuplicateInterval(row);
+    intervalCounts.set(key, (intervalCounts.get(key) ?? 0) + 1);
+
+    const hole = getHoleNumberValue(row.cells.holeNumber);
+    if (hole) {
+      const holes = intervalHoles.get(key) ?? new Set<string>();
+      holes.add(hole);
+      intervalHoles.set(key, holes);
+    }
+  }
+
+  return rows.map((row) => {
+    if (row.pendingDeletion || !isDuplicateValidationRow(row)) {
+      return row;
+    }
+
+    const key = getEffectiveDuplicateInterval(row);
+    const count = intervalCounts.get(key) ?? 0;
+    const holeCount = intervalHoles.get(key)?.size ?? 0;
+    const template = intervalTemplates.get(key);
+    const fromValue = getCellDisplayValue(row.cells.from);
+    const toValue = getCellDisplayValue(row.cells.to);
+
+    if (count >= 2 && template) {
+      if (isDuplicateCellCommitted(row.cells.from) || isDuplicateCellCommitted(row.cells.to)) {
+        return row;
+      }
+
+      const shared: DataTableCellValue = {
+        ...template,
+        status: "error",
+        panelState: "editable",
+        cellCount: count,
+        holeCount,
+        initialStagedValue: undefined,
+        applyScope: undefined,
+        appliedHoles: undefined,
+        value: "",
+      };
+
+      return {
+        ...row,
+        cells: {
+          ...row.cells,
+          from: { ...shared, value: fromValue },
+          to: { ...shared, value: toValue },
+        },
+      };
+    }
+
+    if (count < 2) {
+      const nextCells = { ...row.cells };
+
+      for (const columnId of ["from", "to"] as const) {
+        const cell = nextCells[columnId];
+        if (
+          typeof cell === "object" &&
+          cell.validationType === "duplicates" &&
+          !isDuplicateCellCommitted(cell)
+        ) {
+          nextCells[columnId] = cell.value;
+        }
+      }
+
+      return { ...row, cells: nextCells };
+    }
+
+    return row;
+  });
+}
+
+function updateRowDuplicateCells(
+  row: DataTableRow,
+  updates: Partial<DataTableCellValue>,
+) {
+  const fromCell = row.cells.from;
+  const toCell = row.cells.to;
+
+  return {
+    ...row,
+    cells: {
+      ...row.cells,
+      ...(typeof fromCell === "object"
+        ? { from: { ...fromCell, ...updates } }
+        : {}),
+      ...(typeof toCell === "object" ? { to: { ...toCell, ...updates } } : {}),
+    },
+  };
+}
+
+function getDuplicatesSummaryContext(rows: DataTableRow[], selectedCell: SelectedTableCell) {
+  const rowIndex = rows.findIndex((row) => row.id === selectedCell.rowId);
+  const row = rowIndex >= 0 ? rows[rowIndex] : undefined;
+  if (!row) {
+    return null;
+  }
+
+  const intervalKey = getEffectiveDuplicateInterval(row);
+  const duplicateRowCount = rows.filter(
+    (candidate) =>
+      !candidate.pendingDeletion &&
+      isDuplicateValidationRow(candidate) &&
+      getEffectiveDuplicateInterval(candidate) === intervalKey,
+  ).length;
+
+  const previousRow = rowIndex > 0 ? rows[rowIndex - 1] : undefined;
+  const nextRow = rowIndex < rows.length - 1 ? rows[rowIndex + 1] : undefined;
+
+  return {
+    toValue: getCellDisplayValue(row.cells.to),
+    fromValue: getCellDisplayValue(row.cells.from),
+    defaultPanelState: selectedCell.cell.panelState ?? "editable",
+    initialStagedValue: selectedCell.cell.initialStagedValue,
+    cellCount: duplicateRowCount,
+    holeCount: selectedCell.cell.holeCount ?? 0,
+    toLabel: selectedCell.cell.panelProps?.toLabel,
+    fromLabel: selectedCell.cell.panelProps?.fromLabel,
+    intervalCrossValidation: buildIntervalCrossValidationContext(
+      rows,
+      new Set([selectedCell.rowId]),
+      {
+        previousRowTo:
+          previousRow && !previousRow.pendingDeletion
+            ? getCellDisplayValue(previousRow.cells.to)
+            : undefined,
+        nextRowFrom:
+          nextRow && !nextRow.pendingDeletion
+            ? getCellDisplayValue(nextRow.cells.from)
+            : undefined,
+      },
+    ),
+  };
+}
+
+function applyDuplicatesPanelChangeToRows(
+  rows: DataTableRow[],
+  selectedCell: SelectedTableCell,
+  state: SummaryPanelState,
+  stagedValue: string | undefined,
+): DataTableRow[] {
+  const parsed = stagedValue ? parseDuplicatesStagedValue(stagedValue) : null;
+  const status = panelStateToCellStatus(state);
+  const { rowId } = selectedCell;
+  const correctingRow = rows.find((row) => row.id === rowId);
+  const originalIntervalKey = correctingRow
+    ? getEffectiveDuplicateInterval(correctingRow)
+    : null;
+
+  const sharedUpdates: Partial<DataTableCellValue> = {
+    status,
+    panelState: state,
+    applyScope: "cell",
+    appliedHoles: undefined,
+  };
+
+  if (stagedValue && (state === "staged" || state === "approved")) {
+    sharedUpdates.initialStagedValue = stagedValue;
+  }
+
+  let nextRows = rows.map((row) => {
+    if (row.id !== rowId) {
+      return row;
+    }
+
+    if (parsed?.resolution === "delete-row") {
+      return {
+        ...updateRowDuplicateCells(row, sharedUpdates),
+        pendingDeletion: state === "staged" || state === "approved",
+      };
+    }
+
+    if (parsed?.resolution === "edit-manually") {
+      const fromValue = parsed.fromValue;
+      const toValue = parsed.toValue;
+      const length = computeIntervalLength(fromValue, toValue);
+
+      return {
+        ...row,
+        pendingDeletion: false,
+        cells: {
+          ...row.cells,
+          from:
+            typeof row.cells.from === "object"
+              ? { ...row.cells.from, ...sharedUpdates, value: fromValue }
+              : fromValue,
+          to:
+            typeof row.cells.to === "object"
+              ? { ...row.cells.to, ...sharedUpdates, value: toValue }
+              : toValue,
+          ...(length ? { length } : {}),
+        },
+      };
+    }
+
+    return row;
+  });
+
+  if (
+    parsed?.resolution === "edit-manually" &&
+    (state === "staged" || state === "approved") &&
+    originalIntervalKey
+  ) {
+    const correctedIntervalKey = `${parsed.fromValue.trim()}|${parsed.toValue.trim()}`;
+    if (correctedIntervalKey !== originalIntervalKey) {
+      nextRows = clearDuplicateErrorsOnOtherRows(
+        nextRows,
+        originalIntervalKey,
+        rowId,
+      );
+    }
+  }
+
+  return reconcileDuplicateErrors(nextRows);
+}
+
 function applyPanelChangeToRows(
   rows: DataTableRow[],
   selectedCell: SelectedTableCell,
@@ -460,8 +865,12 @@ function applyPanelChangeToRows(
   applyScope: SummaryApplyScope | undefined,
   selectedHoles: string[] | undefined,
 ): DataTableRow[] {
-  if (selectedCell.cell.validationType === "gaps") {
-    return applyGapsPanelChangeToRows(rows, selectedCell, state, stagedValue);
+  if (selectedCell.cell.validationType === "gaps" || selectedCell.cell.validationType === "overlaps") {
+    return applyIntervalBoundaryPanelChangeToRows(rows, selectedCell, state, stagedValue);
+  }
+
+  if (selectedCell.cell.validationType === "duplicates") {
+    return applyDuplicatesPanelChangeToRows(rows, selectedCell, state, stagedValue);
   }
 
   const scope = applyScope ?? "cell";
@@ -651,7 +1060,12 @@ export function DataTable({
       </thead>
       <tbody>
         {rows.map((row) => (
-          <tr key={row.id} className={styles.bodyRow}>
+          <tr
+            key={row.id}
+            className={[styles.bodyRow, row.pendingDeletion && styles.bodyRowPendingDeletion]
+              .filter(Boolean)
+              .join(" ")}
+          >
             {columns.map((column) => {
               const rawCell = row.cells[column.id] ?? "";
               const { text, config } = normalizeCell(rawCell);
@@ -810,14 +1224,36 @@ export function DataTableWithSummary({
     return getGapsSummaryContext(rows, selectedCell);
   }, [rows, selectedCell]);
 
+  const duplicatesSummaryContext = useMemo(() => {
+    if (!selectedCell || selectedCell.cell.validationType !== "duplicates") {
+      return null;
+    }
+
+    return getDuplicatesSummaryContext(rows, selectedCell);
+  }, [rows, selectedCell]);
+
+  const overlapsSummaryContext = useMemo(() => {
+    if (!selectedCell || selectedCell.cell.validationType !== "overlaps") {
+      return null;
+    }
+
+    return getOverlapsSummaryContext(rows, selectedCell);
+  }, [rows, selectedCell]);
+
   // Remount SummaryPanel when the selected cell changes so workflow state resets cleanly.
   const panelKey = useMemo(() => {
     if (!selectedCell) return "summary-panel-empty";
-    if (selectedCell.cell.validationType === "gaps") {
-      const pair = getGapsPairLocations(selectedCell);
+    if (
+      selectedCell.cell.validationType === "gaps" ||
+      selectedCell.cell.validationType === "overlaps"
+    ) {
+      const pair = getIntervalBoundaryPairLocations(selectedCell);
       if (pair) {
-        return `gaps:${pair.toRowId}:${pair.fromRowId}`;
+        return `${selectedCell.cell.validationType}:${pair.toRowId}:${pair.fromRowId}`;
       }
+    }
+    if (selectedCell.cell.validationType === "duplicates") {
+      return `duplicates:${selectedCell.rowId}`;
     }
     return `${selectedCell.rowId}:${selectedCell.columnId}`;
   }, [selectedCell, rows]);
@@ -829,28 +1265,45 @@ export function DataTableWithSummary({
         invalidValue: selectedCell.cell.invalidValue ?? selectedCell.cell.value,
         cellCount:
           gapsSummaryContext?.cellCount ??
+          overlapsSummaryContext?.cellCount ??
+          duplicatesSummaryContext?.cellCount ??
           errorOccurrenceStats?.cellCount ??
           selectedCell.cell.cellCount ??
           1,
         holeCount:
           gapsSummaryContext?.holeCount ??
+          overlapsSummaryContext?.holeCount ??
+          duplicatesSummaryContext?.holeCount ??
           errorOccurrenceStats?.holeCount ??
           selectedCell.cell.holeCount ??
           0,
         defaultPanelState:
           gapsSummaryContext?.defaultPanelState ??
+          overlapsSummaryContext?.defaultPanelState ??
+          duplicatesSummaryContext?.defaultPanelState ??
           selectedCell.cell.panelState ??
           "editable",
         initialStagedValue:
-          gapsSummaryContext?.initialStagedValue ?? selectedCell.cell.initialStagedValue,
+          gapsSummaryContext?.initialStagedValue ??
+          overlapsSummaryContext?.initialStagedValue ??
+          duplicatesSummaryContext?.initialStagedValue ??
+          selectedCell.cell.initialStagedValue,
         holeOptions,
         defaultSelectedHoles,
         defaultApplyScope:
-          selectedCell.cell.validationType === "gaps" ? "cell" : defaultApplyScope,
+          selectedCell.cell.validationType === "gaps" ||
+          selectedCell.cell.validationType === "overlaps" ||
+          selectedCell.cell.validationType === "duplicates"
+            ? "cell"
+            : defaultApplyScope,
         getApplyImpact,
         ...selectedCell.cell.panelProps,
         ...gapsSummaryContext,
-        ...(selectedCell.cell.validationType === "gaps"
+        ...overlapsSummaryContext,
+        ...duplicatesSummaryContext,
+        ...(selectedCell.cell.validationType === "gaps" ||
+        selectedCell.cell.validationType === "overlaps" ||
+        selectedCell.cell.validationType === "duplicates"
           ? {
               gapsSelectedField:
                 selectedCell.columnId === "to" ? ("to" as const) : ("from" as const),

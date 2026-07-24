@@ -68,7 +68,36 @@ export function isValidGapsResolution(toValue: string, fromValue: string) {
   return areGapsValuesEqual(trimmedTo, trimmedFrom);
 }
 
-export function getGapsFieldErrorMessage(value: string, otherValue: string) {
+type BoundaryFieldErrorOptions = {
+  field?: "to" | "from";
+  toLabel?: string;
+  fromLabel?: string;
+};
+
+export type { BoundaryFieldErrorOptions };
+
+export function getBoundaryMismatchMessage(
+  field: "to" | "from",
+  otherValue: string,
+  toLabel: string,
+  fromLabel: string,
+  kind: "gaps" | "overlaps",
+) {
+  const target = otherValue.trim();
+  const suffix = kind === "overlaps" ? " to remove overlap" : " to close the gap";
+
+  if (field === "to") {
+    return `Must equal ${target} (${fromLabel} in row below)${suffix}`;
+  }
+
+  return `Must equal ${target} (${toLabel} in row above)${suffix}`;
+}
+
+export function getGapsFieldErrorMessage(
+  value: string,
+  otherValue: string,
+  options: BoundaryFieldErrorOptions = {},
+) {
   const trimmed = value.trim();
 
   if (trimmed === "") {
@@ -79,11 +108,25 @@ export function getGapsFieldErrorMessage(value: string, otherValue: string) {
     return "Must be numeric";
   }
 
-  if (otherValue.trim() !== "" && isValidGapsValue(otherValue) && !areGapsValuesEqual(trimmed, otherValue)) {
+  if (
+    otherValue.trim() !== "" &&
+    isValidGapsValue(otherValue) &&
+    !areGapsValuesEqual(trimmed, otherValue)
+  ) {
+    if (options.field && options.toLabel && options.fromLabel) {
+      return getBoundaryMismatchMessage(
+        options.field,
+        otherValue,
+        options.toLabel,
+        options.fromLabel,
+        "gaps",
+      );
+    }
+
     return "Values must be equal";
   }
 
-  return "Must be numeric";
+  return "";
 }
 
 export function getGapsSummaryMessage(

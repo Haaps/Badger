@@ -78,7 +78,10 @@ function SummaryPanelDemoPage({
   const [errorType, setErrorType] = useState<SummaryErrorType>(defaultErrorType);
   const [cellCountMode, setCellCountMode] = useState("multiple");
   const demoCellCount = cellCountMode === "single" ? 1 : undefined;
-  const showCellCountControl = validationType !== "gaps";
+  const showCellCountControl =
+    validationType !== "gaps" &&
+    validationType !== "overlaps" &&
+    validationType !== "duplicates";
   const showSegmentedErrorTypeControl =
     !errorTypeSelectOptions && errorTypeOptions.length > 1;
   const showSelectErrorTypeControl =
@@ -403,16 +406,64 @@ export function SummaryPanelGapsPage() {
       validationType="gaps"
       defaultErrorType="gaps-not-allowed"
       title="Gaps"
-      description="Summary panel for gaps validation errors. The To value in the row above must match the From value in the row below — adjust one or both so they are equal before staging and approving."
+      description="Summary panel for gaps validation errors. The To value in the row above must match the From value in the row below — adjust the selected value so they are equal before staging and approving."
       panelHeight={880}
       hints={[
         "A gap exists when the To value in one row does not match the From value in the next row (demo: 30.0 vs 40.0 = gap of 10.0).",
-        "Click the To or From error cell — summary copy reflects which cell you selected.",
-        "Enter matching numeric values in both fields — Stage Change enables when they are equal.",
-        "Field errors appear for invalid numbers or when the values still do not match.",
+        "Click the To or From error cell — summary copy and the edit field reflect which cell you selected.",
+        "Enter a matching numeric value — Stage Change enables when it equals the adjacent row boundary.",
+        "Field errors appear for invalid numbers or when the value still does not match.",
         "Click the SUMMARY bar to collapse and expand the panel.",
         "In staged state, change the values — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the new values with the previous gap.",
+      ]}
+    />
+  );
+}
+
+export function SummaryPanelOverlapsPage() {
+  return (
+    <SummaryPanelDemoPage
+      validationType="overlaps"
+      defaultErrorType="overlaps-not-allowed"
+      title="Overlaps"
+      description="Summary panel for overlap validation errors. The To value in the row above exceeds the From value in the row below — adjust the selected value so they meet exactly before staging and approving."
+      panelHeight={880}
+      getPanelProps={() => ({
+        toValue: "280.0",
+        fromValue: "278.0",
+        toLabel: "To",
+        fromLabel: "From",
+      })}
+      hints={[
+        "An overlap exists when the row above To exceeds the row below From (demo: 280.0 vs 278.0 = overlap of 2.0).",
+        "Click the To or From error cell — summary copy and the edit field reflect which cell you selected.",
+        "Enter a matching numeric value — Stage Change enables when it equals the adjacent row boundary.",
+        "Corrections that would create a duplicate interval on an adjacent row are blocked.",
+        "Click the SUMMARY bar to collapse and expand the panel.",
+        "In staged state, change the values — Update Staged Value enables.",
+        "In staged or approved state, use Show/Hide details to compare the new values with the previous overlap.",
+      ]}
+    />
+  );
+}
+
+export function SummaryPanelDuplicatesPage() {
+  return (
+    <SummaryPanelDemoPage
+      validationType="duplicates"
+      defaultErrorType="duplicates-not-allowed"
+      title="Duplicates"
+      description="Summary panel for duplicate interval errors. Two or more rows share the same From and To values — delete this row or edit the interval manually before staging and approving."
+      panelHeight={880}
+      hints={[
+        "The header reads “Duplicates not allowed” with a count of rows sharing the same interval.",
+        "Choose Delete this row to remove the selected row, or Edit values manually to change the interval.",
+        "Manual edit shows one field for the selected column — Stage Change enables when the interval differs from the duplicate.",
+        "Field errors appear for invalid numbers or when values still match the duplicate interval.",
+        "Click the SUMMARY bar to collapse and expand the panel.",
+        "In staged state, switch resolution or edit values — Update Staged Value enables.",
+        "In staged or approved state, use Show/Hide details to compare the resolution with the previous interval.",
       ]}
     />
   );
