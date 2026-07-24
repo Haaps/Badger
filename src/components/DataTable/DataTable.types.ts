@@ -24,7 +24,7 @@ export type DataTableCellValue = {
   errorType?: SummaryErrorType;
   /** Additional Summary Panel props for this cell's validation scenario. */
   panelProps?: Partial<SummaryPanelProps>;
-  /** Other cell in a gaps pair (previous row To ↔ current row From). */
+  /** Other cell in a gaps/overlaps pair (previous row To ↔ current row From). */
   gapsPartner?: {
     rowId: string;
     columnId: string;
@@ -43,6 +43,8 @@ export type DataTableColumn = {
 export type DataTableRow = {
   id: string;
   cells: Record<string, DataTableCellValue | string>;
+  /** Duplicate row staged for deletion — fades row data and shows hatch overlay. */
+  pendingDeletion?: boolean;
 };
 
 export type SelectedTableCell = {

@@ -13,9 +13,15 @@ export type SummaryValidationType =
   | "date"
   | "date-time"
   | "numeric"
-  | "gaps";
+  | "gaps"
+  | "duplicates"
+  | "overlaps";
 
 export type GapsSummaryErrorType = "gaps-not-allowed";
+
+export type OverlapsSummaryErrorType = "overlaps-not-allowed";
+
+export type DuplicatesSummaryErrorType = "duplicates-not-allowed";
 
 /** List, boolean, date, and date-time columns share these error categories. */
 export type ListSummaryErrorType = "invalid-value" | "missing-value";
@@ -47,9 +53,26 @@ export type SummaryErrorType =
   | ListSummaryErrorType
   | TextSummaryErrorType
   | NumericSummaryErrorType
-  | GapsSummaryErrorType;
+  | GapsSummaryErrorType
+  | DuplicatesSummaryErrorType
+  | OverlapsSummaryErrorType;
 
 export type CharacterLimitResolution = "trim-to-limit" | "increase-limit";
+
+export type DuplicateResolution = "delete-row" | "edit-manually";
+
+export type IntervalCrossValidationContext = {
+  /** Other row intervals as "from|to", excluding rows impacted by this correction. */
+  otherIntervals?: string[];
+  /** For duplicate row edit: To on the row above. */
+  previousRowTo?: string;
+  /** For duplicate row edit: From on the row below. */
+  nextRowFrom?: string;
+  /** For gaps pair fix: unchanged From on the upper row. */
+  gapAboveRowFrom?: string;
+  /** For gaps pair fix: unchanged To on the lower row. */
+  gapBelowRowTo?: string;
+};
 
 export type DecimalLimitResolution =
   | "round-to-limit"
@@ -120,8 +143,12 @@ export type SummaryPanelProps = {
   toLabel?: string;
   /** From column header label used in summary copy and the From field label. */
   fromLabel?: string;
-  /** Which gaps cell is selected — adjusts summary copy to this row vs adjacent row. */
+  /** Which gaps/overlaps/duplicates cell is selected — summary copy and edit field target this column. */
   gapsSelectedField?: "to" | "from";
+  /** Initial resolution for duplicates validation errors. */
+  defaultDuplicateResolution?: DuplicateResolution;
+  /** Neighbor rows and intervals for gaps/duplicate cross-validation in interval tables. */
+  intervalCrossValidation?: IntervalCrossValidationContext;
   /**
    * Required date format hint shown beside the Date field label (e.g. "yyyy/mm/dd").
    * Defined by the platform column schema. The panel validates input against this format.

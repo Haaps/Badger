@@ -25,17 +25,36 @@ import {
   isValidDateTimeForFormat,
 } from "./dateFormatValidation";
 import {
-  areGapsValuesEqual,
   computeGapsGap,
   formatGapsGap,
   formatGapsValuesSummary,
   getGapsFieldErrorMessage,
   getGapsStagedValue,
   getGapsSummaryMessage,
-  isValidGapsResolution,
   isValidGapsValue,
   parseGapsStagedValue,
 } from "./gapsValidation";
+import {
+  computeOverlap,
+  formatOverlap,
+  getOverlapsStagedValue,
+  getOverlapsSummaryMessage,
+  getOverlapsFieldErrorMessage,
+  parseOverlapsStagedValue,
+} from "./overlapsValidation";
+import {
+  getDuplicatesEditFieldErrorMessage,
+  getDuplicatesStagedDisplayText,
+  getDuplicatesStagedValue,
+  getDuplicatesSummaryMessage,
+  parseDuplicatesStagedValue,
+} from "./duplicatesValidation";
+import {
+  getDuplicatesCrossValidationErrorMessage,
+  getGapsCrossValidationErrorMessage,
+  isValidDuplicatesEditWithCrossValidation,
+  isValidGapsResolutionWithCrossValidation,
+} from "./intervalValidation";
 import {
   getNumericValidationErrorMessage,
   isValidNumericValue,
@@ -69,9 +88,21 @@ import {
   DEMO_GAPS_HOLE_COUNT,
   DEMO_GAPS_TO_LABEL,
   DEMO_GAPS_TO_VALUE,
+  DEMO_DUPLICATES_FROM_LABEL,
+  DEMO_DUPLICATES_FROM_VALUE,
+  DEMO_DUPLICATES_HOLE_COUNT,
+  DEMO_DUPLICATES_ROW_COUNT,
+  DEMO_DUPLICATES_TO_LABEL,
+  DEMO_DUPLICATES_TO_VALUE,
   DEMO_HOLE_COUNT,
   DEMO_HOLE_OPTIONS,
   DEMO_INVALID_VALUE,
+  DEMO_OVERLAPS_CELL_COUNT,
+  DEMO_OVERLAPS_FROM_LABEL,
+  DEMO_OVERLAPS_FROM_VALUE,
+  DEMO_OVERLAPS_HOLE_COUNT,
+  DEMO_OVERLAPS_TO_LABEL,
+  DEMO_OVERLAPS_TO_VALUE,
   DEMO_MAX_ENTERED_CHARACTER_COUNT_IN_SELECTION,
   DEMO_MISSING_CELL_COUNT,
   DEMO_MISSING_HOLE_COUNT,
@@ -109,7 +140,10 @@ import type {
   BooleanValueOption,
   CharacterLimitResolution,
   DecimalLimitResolution,
+  DuplicateResolution,
+  DuplicatesSummaryErrorType,
   GapsSummaryErrorType,
+  OverlapsSummaryErrorType,
   ListSummaryErrorType,
   NumericSummaryErrorType,
   SummaryApplyImpact,
@@ -141,6 +175,14 @@ const DECIMAL_LIMIT_RESOLUTION_OPTIONS = [
   { value: "adjust-manually", label: "Adjust value manually" },
 ] as const satisfies ReadonlyArray<{
   value: DecimalLimitResolution;
+  label: string;
+}>;
+
+const DUPLICATE_RESOLUTION_OPTIONS = [
+  { value: "delete-row", label: "Delete this row" },
+  { value: "edit-manually", label: "Edit values manually" },
+] as const satisfies ReadonlyArray<{
+  value: DuplicateResolution;
   label: string;
 }>;
 
@@ -181,6 +223,18 @@ const BOOLEAN_ERROR_COPY: Record<ListSummaryErrorType, PanelCopy> = {
 const GAPS_ERROR_COPY: Record<GapsSummaryErrorType, PanelCopy> = {
   "gaps-not-allowed": {
     editableTitle: "Gaps not allowed",
+  },
+};
+
+const DUPLICATES_ERROR_COPY: Record<DuplicatesSummaryErrorType, PanelCopy> = {
+  "duplicates-not-allowed": {
+    editableTitle: "Duplicates not allowed",
+  },
+};
+
+const OVERLAPS_ERROR_COPY: Record<OverlapsSummaryErrorType, PanelCopy> = {
+  "overlaps-not-allowed": {
+    editableTitle: "Overlaps not allowed",
   },
 };
 
@@ -238,6 +292,18 @@ function isGapsValidation(validationType: SummaryValidationType) {
   return validationType === "gaps";
 }
 
+function isOverlapsValidation(validationType: SummaryValidationType) {
+  return validationType === "overlaps";
+}
+
+function isIntervalBoundaryValidation(validationType: SummaryValidationType) {
+  return isGapsValidation(validationType) || isOverlapsValidation(validationType);
+}
+
+function isDuplicatesValidation(validationType: SummaryValidationType) {
+  return validationType === "duplicates";
+}
+
 function isNumericValidation(validationType: SummaryValidationType) {
   return validationType === "numeric";
 }
@@ -252,6 +318,14 @@ function getPanelCopy(
 
   if (validationType === "gaps") {
     return GAPS_ERROR_COPY[errorType as GapsSummaryErrorType];
+  }
+
+  if (validationType === "duplicates") {
+    return DUPLICATES_ERROR_COPY[errorType as DuplicatesSummaryErrorType];
+  }
+
+  if (validationType === "overlaps") {
+    return OVERLAPS_ERROR_COPY[errorType as OverlapsSummaryErrorType];
   }
 
   if (validationType === "date") {
@@ -471,6 +545,29 @@ function syncExceededLimitResolutionState(
   const parsed = parseExceededLimitStagedValue(resolutionValue);
   setResolution(parsed.resolution);
   setNewLimit(parsed.newLimit);
+}
+
+function getAdjustValueLabel(label: string) {
+  return `Adjust ${label} Value`;
+}
+
+function syncDuplicatesResolutionState(
+  resolutionValue: string,
+  setResolution: (resolution: DuplicateResolution) => void,
+  setToValue: (value: string) => void,
+  setFromValue: (value: string) => void,
+  fallbackToValue: string,
+  fallbackFromValue: string,
+) {
+  const parsed = parseDuplicatesStagedValue(resolutionValue);
+  setResolution(parsed.resolution);
+  if (parsed.resolution === "edit-manually") {
+    setToValue(parsed.toValue);
+    setFromValue(parsed.fromValue);
+  } else {
+    setToValue(fallbackToValue);
+    setFromValue(fallbackFromValue);
+  }
 }
 
 function canCommitExceededLimitResolution(
@@ -1172,6 +1269,8 @@ export function SummaryPanel({
   toLabel: toLabelProp,
   fromLabel: fromLabelProp,
   gapsSelectedField = "from",
+  defaultDuplicateResolution = "delete-row",
+  intervalCrossValidation,
   dateFormat: dateFormatProp,
   dateTimeFormat: dateTimeFormatProp,
   holeOptions = DEMO_HOLE_OPTIONS,
@@ -1216,16 +1315,49 @@ export function SummaryPanel({
               ? DEMO_DATE_TIME_INVALID_VALUE
               : validationType === "gaps"
                 ? DEMO_INVALID_VALUE
+                : validationType === "duplicates"
+                  ? DEMO_INVALID_VALUE
+                  : validationType === "overlaps"
+                    ? DEMO_INVALID_VALUE
               : DEMO_INVALID_VALUE);
-  const resolvedToValue = toValueProp ?? DEMO_GAPS_TO_VALUE;
-  const resolvedFromValue = fromValueProp ?? DEMO_GAPS_FROM_VALUE;
-  const resolvedToLabel = toLabelProp ?? DEMO_GAPS_TO_LABEL;
-  const resolvedFromLabel = fromLabelProp ?? DEMO_GAPS_FROM_LABEL;
+  const resolvedToValue =
+    toValueProp ??
+    (validationType === "duplicates"
+      ? DEMO_DUPLICATES_TO_VALUE
+      : validationType === "overlaps"
+        ? DEMO_OVERLAPS_TO_VALUE
+        : DEMO_GAPS_TO_VALUE);
+  const resolvedFromValue =
+    fromValueProp ??
+    (validationType === "duplicates"
+      ? DEMO_DUPLICATES_FROM_VALUE
+      : validationType === "overlaps"
+        ? DEMO_OVERLAPS_FROM_VALUE
+        : DEMO_GAPS_FROM_VALUE);
+  const resolvedToLabel =
+    toLabelProp ??
+    (validationType === "duplicates"
+      ? DEMO_DUPLICATES_TO_LABEL
+      : validationType === "overlaps"
+        ? DEMO_OVERLAPS_TO_LABEL
+        : DEMO_GAPS_TO_LABEL);
+  const resolvedFromLabel =
+    fromLabelProp ??
+    (validationType === "duplicates"
+      ? DEMO_DUPLICATES_FROM_LABEL
+      : validationType === "overlaps"
+        ? DEMO_OVERLAPS_FROM_LABEL
+        : DEMO_GAPS_FROM_LABEL);
   const originalGapsValuesRef = useRef({
     toValue: resolvedToValue,
     fromValue: resolvedFromValue,
   });
   const originalGapsValues = originalGapsValuesRef.current;
+  const originalDuplicatesValuesRef = useRef({
+    toValue: resolvedToValue,
+    fromValue: resolvedFromValue,
+  });
+  const originalDuplicatesValues = originalDuplicatesValuesRef.current;
   const dateFormat = dateFormatProp ?? DEMO_DATE_FORMAT;
   const dateTimeFormat = dateTimeFormatProp ?? DEMO_DATE_TIME_FORMAT;
   const characterLimit = characterLimitProp ?? DEMO_CHARACTER_LIMIT;
@@ -1271,6 +1403,10 @@ export function SummaryPanel({
                 ? DEMO_DATE_TIME_CELL_COUNT
                 : validationType === "gaps"
                   ? DEMO_GAPS_CELL_COUNT
+                  : validationType === "duplicates"
+                    ? DEMO_DUPLICATES_ROW_COUNT
+                    : validationType === "overlaps"
+                      ? DEMO_OVERLAPS_CELL_COUNT
                 : DEMO_CELL_COUNT);
   const holeCount =
     holeCountProp ??
@@ -1290,6 +1426,10 @@ export function SummaryPanel({
                 ? DEMO_DATE_TIME_HOLE_COUNT
                 : validationType === "gaps"
                   ? DEMO_GAPS_HOLE_COUNT
+                  : validationType === "duplicates"
+                    ? DEMO_DUPLICATES_HOLE_COUNT
+                    : validationType === "overlaps"
+                      ? DEMO_OVERLAPS_HOLE_COUNT
                 : DEMO_HOLE_COUNT);
   const defaultBooleanValue = booleanValueOptions[0]?.value ?? "";
   const initialStagedValue =
@@ -1310,6 +1450,10 @@ export function SummaryPanel({
               ? DEMO_DATE_TIME_INITIAL_STAGED_VALUE
               : validationType === "gaps"
                 ? getGapsStagedValue(resolvedToValue, resolvedFromValue)
+                : validationType === "overlaps"
+                  ? getOverlapsStagedValue(resolvedToValue, resolvedFromValue)
+                : validationType === "duplicates"
+                  ? getDuplicatesStagedValue(defaultDuplicateResolution, resolvedToValue, resolvedFromValue)
               : "bnd");
   const [internalCollapsed, setInternalCollapsed] = useState(defaultCollapsed);
   const isCollapsedControlled = collapsedProp !== undefined;
@@ -1326,8 +1470,17 @@ export function SummaryPanel({
   const opensInCommittedState =
     defaultPanelState === "staged" || defaultPanelState === "approved";
   const initialGapsValues = opensInCommittedState
-    ? parseGapsStagedValue(initialStagedValue)
+    ? validationType === "overlaps"
+      ? parseOverlapsStagedValue(initialStagedValue)
+      : parseGapsStagedValue(initialStagedValue)
     : { toValue: resolvedToValue, fromValue: resolvedFromValue };
+  const initialDuplicatesValues = opensInCommittedState
+    ? parseDuplicatesStagedValue(initialStagedValue)
+    : {
+        resolution: defaultDuplicateResolution,
+        toValue: resolvedToValue,
+        fromValue: resolvedFromValue,
+      };
 
   const [panelState, setPanelState] = useState<SummaryPanelState>(defaultPanelState);
   const [valueInputMode, setValueInputMode] = useState<ValueInputMode>("select");
@@ -1343,6 +1496,19 @@ export function SummaryPanel({
   );
   const [gapsToValue, setGapsToValue] = useState(initialGapsValues.toValue);
   const [gapsFromValue, setGapsFromValue] = useState(initialGapsValues.fromValue);
+  const [duplicateResolution, setDuplicateResolution] = useState<DuplicateResolution>(
+    initialDuplicatesValues.resolution,
+  );
+  const [duplicatesToValue, setDuplicatesToValue] = useState(
+    initialDuplicatesValues.resolution === "edit-manually"
+      ? initialDuplicatesValues.toValue
+      : resolvedToValue,
+  );
+  const [duplicatesFromValue, setDuplicatesFromValue] = useState(
+    initialDuplicatesValues.resolution === "edit-manually"
+      ? initialDuplicatesValues.fromValue
+      : resolvedFromValue,
+  );
   const [customValue, setCustomValue] = useState("");
   const [stagedValue, setStagedValue] = useState(
     opensInCommittedState ? initialStagedValue : "",
@@ -1389,12 +1555,15 @@ export function SummaryPanel({
 
   const isSingleCellError = cellCount <= 1;
   const isGaps = isGapsValidation(validationType);
+  const isOverlaps = isOverlapsValidation(validationType);
+  const isIntervalBoundary = isIntervalBoundaryValidation(validationType);
+  const isDuplicates = isDuplicatesValidation(validationType);
 
   useEffect(() => {
-    if (isSingleCellError || isGaps) {
+    if (isSingleCellError || isIntervalBoundary || isDuplicates) {
       setApplyScope("cell");
     }
-  }, [isSingleCellError, isGaps]);
+  }, [isSingleCellError, isIntervalBoundary, isDuplicates]);
 
   const isApproved = panelState === "approved";
   const isStaged = panelState === "staged";
@@ -1453,27 +1622,109 @@ export function SummaryPanel({
     (trimmedDateTimeValue !== "" &&
       isValidDateTimeForFormat(trimmedDateTimeValue, dateTimeFormat));
 
-  const trimmedGapsToValue = isGaps ? gapsToValue.trim() : "";
-  const trimmedGapsFromValue = isGaps ? gapsFromValue.trim() : "";
-  const isGapsValueCommittable =
-    !isGaps || isValidGapsResolution(gapsToValue, gapsFromValue);
-  const showGapsToError =
-    isGaps &&
+  const trimmedGapsToValue = isIntervalBoundary ? gapsToValue.trim() : "";
+  const trimmedGapsFromValue = isIntervalBoundary ? gapsFromValue.trim() : "";
+  const isIntervalBoundaryValueCommittable =
+    !isIntervalBoundary ||
+    isValidGapsResolutionWithCrossValidation(
+      gapsToValue,
+      gapsFromValue,
+      intervalCrossValidation,
+    );
+  const resolveBoundaryFieldErrorMessage = (field: "to" | "from", value: string, otherValue: string) => {
+    const fieldOptions = {
+      field,
+      toLabel: resolvedToLabel,
+      fromLabel: resolvedFromLabel,
+    };
+    const basicError = isOverlaps
+      ? getOverlapsFieldErrorMessage(value, otherValue, fieldOptions)
+      : getGapsFieldErrorMessage(value, otherValue, fieldOptions);
+    if (basicError) {
+      return basicError;
+    }
+
+    if (!isValidGapsValue(value.trim())) {
+      return "";
+    }
+
+    return getGapsCrossValidationErrorMessage(
+      gapsToValue,
+      gapsFromValue,
+      intervalCrossValidation,
+      field,
+      resolvedToLabel,
+      resolvedFromLabel,
+    );
+  };
+  const showBoundaryToError =
+    isIntervalBoundary &&
+    gapsSelectedField === "to" &&
     trimmedGapsToValue !== "" &&
-    (!isValidGapsValue(trimmedGapsToValue) ||
-      (trimmedGapsFromValue !== "" &&
-        isValidGapsValue(trimmedGapsFromValue) &&
-        !areGapsValuesEqual(trimmedGapsToValue, trimmedGapsFromValue)));
-  const showGapsFromError =
-    isGaps &&
+    resolveBoundaryFieldErrorMessage("to", gapsToValue, gapsFromValue) !== "";
+  const showBoundaryFromError =
+    isIntervalBoundary &&
+    gapsSelectedField === "from" &&
     trimmedGapsFromValue !== "" &&
-    (!isValidGapsValue(trimmedGapsFromValue) ||
-      (trimmedGapsToValue !== "" &&
-        isValidGapsValue(trimmedGapsToValue) &&
-        !areGapsValuesEqual(trimmedGapsToValue, trimmedGapsFromValue)));
-  const displayedGapsGap = computeGapsGap(gapsToValue, gapsFromValue);
+    resolveBoundaryFieldErrorMessage("from", gapsFromValue, gapsToValue) !== "";
+  const displayedGapsGap = isGaps ? computeGapsGap(gapsToValue, gapsFromValue) : null;
+  const displayedOverlap = isOverlaps ? computeOverlap(gapsToValue, gapsFromValue) : null;
   const showCurrentGapsGap =
     isGaps && isEditable && displayedGapsGap !== null && displayedGapsGap > 0;
+  const showCurrentOverlap =
+    isOverlaps && isEditable && displayedOverlap !== null && displayedOverlap > 0;
+
+  const trimmedDuplicatesToValue = isDuplicates ? duplicatesToValue.trim() : "";
+  const trimmedDuplicatesFromValue = isDuplicates ? duplicatesFromValue.trim() : "";
+  const isDuplicatesValueCommittable =
+    !isDuplicates ||
+    duplicateResolution === "delete-row" ||
+    isValidDuplicatesEditWithCrossValidation(
+      duplicatesToValue,
+      duplicatesFromValue,
+      originalDuplicatesValues.fromValue,
+      originalDuplicatesValues.toValue,
+      intervalCrossValidation,
+    );
+  const resolveDuplicatesFieldErrorMessage = (field: "to" | "from", value: string) => {
+    const basicError = getDuplicatesEditFieldErrorMessage(
+      value,
+      duplicatesToValue,
+      duplicatesFromValue,
+      originalDuplicatesValues.fromValue,
+      originalDuplicatesValues.toValue,
+      field,
+      resolvedToLabel,
+      resolvedFromLabel,
+    );
+
+    if (basicError) {
+      return basicError;
+    }
+
+    return getDuplicatesCrossValidationErrorMessage(
+      duplicatesToValue,
+      duplicatesFromValue,
+      originalDuplicatesValues.fromValue,
+      originalDuplicatesValues.toValue,
+      intervalCrossValidation,
+      field,
+      resolvedFromLabel,
+      resolvedToLabel,
+    );
+  };
+  const showDuplicatesToError =
+    isDuplicates &&
+    duplicateResolution === "edit-manually" &&
+    gapsSelectedField === "to" &&
+    trimmedDuplicatesToValue !== "" &&
+    resolveDuplicatesFieldErrorMessage("to", duplicatesToValue) !== "";
+  const showDuplicatesFromError =
+    isDuplicates &&
+    duplicateResolution === "edit-manually" &&
+    gapsSelectedField === "from" &&
+    trimmedDuplicatesFromValue !== "" &&
+    resolveDuplicatesFieldErrorMessage("from", duplicatesFromValue) !== "";
 
   const currentValue = isExceededLimit
     ? getExceededLimitStagedValue(characterLimitResolution, newCharacterLimit)
@@ -1483,8 +1734,10 @@ export function SummaryPanel({
           newDecimalLimit,
           manualNumericValue,
         )
-      : isGaps
+      : isIntervalBoundary
         ? getGapsStagedValue(gapsToValue, gapsFromValue)
+        : isDuplicates
+          ? getDuplicatesStagedValue(duplicateResolution, duplicatesToValue, duplicatesFromValue)
       : validationType === "text" ||
           validationType === "date" ||
           validationType === "date-time" ||
@@ -1507,8 +1760,10 @@ export function SummaryPanel({
         ? isDateTimeValueCommittable
         : isDate
           ? isDateValueCommittable
-          : isGaps
-            ? isGapsValueCommittable
+          : isIntervalBoundary
+            ? isIntervalBoundaryValueCommittable
+            : isDuplicates
+              ? isDuplicatesValueCommittable
             : isNumeric
               ? isNumericValueCommittable
               : currentValue !== "";
@@ -1520,6 +1775,7 @@ export function SummaryPanel({
   const canApprove = isStaged && isCurrentValueCommittable;
 
   const stagedGapsValues = parseGapsStagedValue(stagedValue);
+  const stagedDuplicatesValues = parseDuplicatesStagedValue(stagedValue);
   const stagedAsText = isExceededLimit
     ? getExceededLimitStagedAsDisplayText(
         isApproved,
@@ -1543,13 +1799,21 @@ export function SummaryPanel({
           decimalMax,
           invalidValue,
         )
-      : isGaps
+      : isIntervalBoundary
         ? formatGapsValuesSummary(
             resolvedToLabel,
             stagedGapsValues.toValue,
             resolvedFromLabel,
             stagedGapsValues.fromValue,
           )
+        : isDuplicates
+          ? getDuplicatesStagedDisplayText(
+              stagedDuplicatesValues.resolution,
+              resolvedToLabel,
+              stagedDuplicatesValues.toValue,
+              resolvedFromLabel,
+              stagedDuplicatesValues.fromValue,
+            )
       : isBoolean
         ? resolveBooleanDisplayValue(stagedValue, booleanValueOptions)
         : validationType === "list"
@@ -1560,13 +1824,20 @@ export function SummaryPanel({
     ? originalExceededLimitText
     : isNumericDecimalLimitResolution
       ? invalidValue
-      : isGaps
+      : isIntervalBoundary
         ? formatGapsValuesSummary(
             resolvedToLabel,
             originalGapsValues.toValue,
             resolvedFromLabel,
             originalGapsValues.fromValue,
           )
+        : isDuplicates
+          ? formatGapsValuesSummary(
+              resolvedToLabel,
+              originalDuplicatesValues.toValue,
+              resolvedFromLabel,
+              originalDuplicatesValues.fromValue,
+            )
       : previousValueLabel;
 
   const applyImpact = useMemo(
@@ -1660,6 +1931,16 @@ export function SummaryPanel({
         setManualNumericValue,
       );
     }
+    if (isDuplicates) {
+      syncDuplicatesResolutionState(
+        currentValue,
+        setDuplicateResolution,
+        setDuplicatesToValue,
+        setDuplicatesFromValue,
+        resolvedToValue,
+        resolvedFromValue,
+      );
+    }
     setStagedDetailsExpanded(false);
     setPanelState("staged");
     onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
@@ -1684,6 +1965,16 @@ export function SummaryPanel({
         setManualNumericValue,
       );
     }
+    if (isDuplicates) {
+      syncDuplicatesResolutionState(
+        currentValue,
+        setDuplicateResolution,
+        setDuplicatesToValue,
+        setDuplicatesFromValue,
+        resolvedToValue,
+        resolvedFromValue,
+      );
+    }
     onPanelStateChange?.("staged", currentValue, applyScope, selectedHoles);
   };
 
@@ -1704,6 +1995,16 @@ export function SummaryPanel({
         setDecimalLimitResolution,
         setNewDecimalLimit,
         setManualNumericValue,
+      );
+    }
+    if (isDuplicates) {
+      syncDuplicatesResolutionState(
+        currentValue,
+        setDuplicateResolution,
+        setDuplicatesToValue,
+        setDuplicatesFromValue,
+        resolvedToValue,
+        resolvedFromValue,
       );
     }
     setStagedDetailsExpanded(false);
@@ -1728,6 +2029,16 @@ export function SummaryPanel({
         setDecimalLimitResolution,
         setNewDecimalLimit,
         setManualNumericValue,
+      );
+    }
+    if (isDuplicates) {
+      syncDuplicatesResolutionState(
+        stagedValue,
+        setDuplicateResolution,
+        setDuplicatesToValue,
+        setDuplicatesFromValue,
+        resolvedToValue,
+        resolvedFromValue,
       );
     }
     onPanelStateChange?.("staged", stagedValue, applyScope, selectedHoles);
@@ -1885,7 +2196,7 @@ export function SummaryPanel({
     return "Enter Updated Value";
   };
 
-  const renderGapsResolutionFields = () => (
+  const renderIntervalBoundaryResolutionFields = () => (
     <>
       {showCurrentGapsGap && (
         <div className={styles.gapsCurrentGapBanner}>
@@ -1894,31 +2205,100 @@ export function SummaryPanel({
           </p>
         </div>
       )}
+      {showCurrentOverlap && (
+        <div className={styles.gapsCurrentGapBanner}>
+          <p className={styles.gapsCurrentGapText}>
+            Current overlap: {formatOverlap(displayedOverlap!)}
+          </p>
+        </div>
+      )}
       <div className={styles.gapsFields}>
-        <TextField
-          className={styles.gapsField}
-          label={resolvedToLabel}
-          placeholder=""
-          value={gapsToValue}
-          onChange={(event) => setGapsToValue(event.target.value)}
-          disabled={isApproved}
-          error={showGapsToError}
-          errorMessage={getGapsFieldErrorMessage(gapsToValue, gapsFromValue)}
-          aria-label={resolvedToLabel}
-        />
-        <TextField
-          className={styles.gapsField}
-          label={resolvedFromLabel}
-          placeholder=""
-          value={gapsFromValue}
-          onChange={(event) => setGapsFromValue(event.target.value)}
-          disabled={isApproved}
-          error={showGapsFromError}
-          errorMessage={getGapsFieldErrorMessage(gapsFromValue, gapsToValue)}
-          aria-label={resolvedFromLabel}
-        />
+        {gapsSelectedField === "to" ? (
+          <TextField
+            className={styles.gapsField}
+            label={getAdjustValueLabel(resolvedToLabel)}
+            placeholder=""
+            value={gapsToValue}
+            onChange={(event) => setGapsToValue(event.target.value)}
+            disabled={isApproved}
+            error={showBoundaryToError}
+            errorMessage={resolveBoundaryFieldErrorMessage("to", gapsToValue, gapsFromValue)}
+            aria-label={getAdjustValueLabel(resolvedToLabel)}
+          />
+        ) : (
+          <TextField
+            className={styles.gapsField}
+            label={getAdjustValueLabel(resolvedFromLabel)}
+            placeholder=""
+            value={gapsFromValue}
+            onChange={(event) => setGapsFromValue(event.target.value)}
+            disabled={isApproved}
+            error={showBoundaryFromError}
+            errorMessage={resolveBoundaryFieldErrorMessage("from", gapsFromValue, gapsToValue)}
+            aria-label={getAdjustValueLabel(resolvedFromLabel)}
+          />
+        )}
       </div>
     </>
+  );
+
+  const renderDuplicatesResolutionSection = () => (
+    <div className={styles.resolutionSection}>
+      <p className={styles.resolutionLabel}>Select resolution</p>
+      <div
+        className={styles.resolutionOptions}
+        role="radiogroup"
+        aria-label="Select resolution"
+      >
+        {DUPLICATE_RESOLUTION_OPTIONS.map((option) => (
+          <Radio
+            key={option.value}
+            name="duplicate-resolution"
+            className={styles.resolutionRadio}
+            checked={duplicateResolution === option.value}
+            onCheckedChange={() => {
+              setDuplicateResolution(option.value);
+              if (option.value === "edit-manually") {
+                setDuplicatesToValue(resolvedToValue);
+                setDuplicatesFromValue(resolvedFromValue);
+              }
+            }}
+            disabled={isApproved}
+            label={option.label}
+          />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderDuplicatesEditFields = () => (
+    <div className={styles.gapsFields}>
+      {gapsSelectedField === "to" ? (
+        <TextField
+          className={styles.gapsField}
+          label={getAdjustValueLabel(resolvedToLabel)}
+          placeholder=""
+          value={duplicatesToValue}
+          onChange={(event) => setDuplicatesToValue(event.target.value)}
+          disabled={isApproved}
+          error={showDuplicatesToError}
+          errorMessage={resolveDuplicatesFieldErrorMessage("to", duplicatesToValue)}
+          aria-label={getAdjustValueLabel(resolvedToLabel)}
+        />
+      ) : (
+        <TextField
+          className={styles.gapsField}
+          label={getAdjustValueLabel(resolvedFromLabel)}
+          placeholder=""
+          value={duplicatesFromValue}
+          onChange={(event) => setDuplicatesFromValue(event.target.value)}
+          disabled={isApproved}
+          error={showDuplicatesFromError}
+          errorMessage={resolveDuplicatesFieldErrorMessage("from", duplicatesFromValue)}
+          aria-label={getAdjustValueLabel(resolvedFromLabel)}
+        />
+      )}
+    </div>
   );
 
   const renderBooleanValueField = () => (
@@ -1950,7 +2330,7 @@ export function SummaryPanel({
   );
 
   const renderValueField = () => {
-    if (isExceededLimit || isNumericDecimalLimitResolution || isGaps) {
+    if (isExceededLimit || isNumericDecimalLimitResolution || isIntervalBoundary || isDuplicates) {
       return null;
     }
 
@@ -2139,6 +2519,14 @@ export function SummaryPanel({
                             resolvedToLabel,
                             gapsSelectedField,
                           )
+                        : isOverlaps
+                          ? getOverlapsSummaryMessage(
+                              resolvedFromLabel,
+                              resolvedToLabel,
+                              gapsSelectedField,
+                            )
+                        : isDuplicates
+                          ? getDuplicatesSummaryMessage(cellCount)
                         : getSummaryMessage(
                             validationType,
                             errorType,
@@ -2162,7 +2550,7 @@ export function SummaryPanel({
                   stagedAsHeading="STAGED AS"
                   stagedAsText={stagedAsText}
                   previouslyText={previouslyText}
-                  quoteValues={!isBoolean && !isGaps}
+                  quoteValues={!isBoolean && !isIntervalBoundary && !isDuplicates}
                 />
               )}
 
@@ -2174,7 +2562,7 @@ export function SummaryPanel({
                   stagedAsHeading="APPROVED AS"
                   stagedAsText={stagedAsText}
                   previouslyText={previouslyText}
-                  quoteValues={!isBoolean && !isGaps}
+                  quoteValues={!isBoolean && !isIntervalBoundary && !isDuplicates}
                 />
               )}
 
@@ -2189,8 +2577,13 @@ export function SummaryPanel({
                   {decimalLimitResolution === "increase-limit" && renderNewDecimalLimitField()}
                   {decimalLimitResolution === "adjust-manually" && renderManualNumericValueField()}
                 </>
-              ) : isGaps ? (
-                renderGapsResolutionFields()
+              ) : isIntervalBoundary ? (
+                renderIntervalBoundaryResolutionFields()
+              ) : isDuplicates ? (
+                <>
+                  {renderDuplicatesResolutionSection()}
+                  {duplicateResolution === "edit-manually" && renderDuplicatesEditFields()}
+                </>
               ) : isBoolean ? (
                 renderBooleanValueField()
               ) : (
@@ -2198,7 +2591,7 @@ export function SummaryPanel({
               )}
             </div>
 
-            {!isGaps && (
+            {!isIntervalBoundary && !isDuplicates && (
             <div className={applySectionClassNames}>
               <SegmentedControl
                 className={styles.segmentedControl}

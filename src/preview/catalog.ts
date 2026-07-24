@@ -17,6 +17,8 @@ import {
   SummaryPanelDateTimePage,
   SummaryPanelNumericPage,
   SummaryPanelGapsPage,
+  SummaryPanelOverlapsPage,
+  SummaryPanelDuplicatesPage,
 } from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
 import { TextFieldPage } from "./pages/TextFieldPage";
@@ -139,6 +141,16 @@ export const componentCatalog: ComponentEntry[] = [
         path: "summary-panel/gaps-validation",
         label: "Gaps",
         Page: SummaryPanelGapsPage,
+      },
+      {
+        path: "summary-panel/overlaps-validation",
+        label: "Overlaps",
+        Page: SummaryPanelOverlapsPage,
+      },
+      {
+        path: "summary-panel/duplicates-validation",
+        label: "Duplicates",
+        Page: SummaryPanelDuplicatesPage,
       },
     ],
   },

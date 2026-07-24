@@ -89,7 +89,7 @@ export function HowToUsePage() {
           </li>
           <li>
             Summary Panel has six gallery pages — list, text, boolean, date,
-            date/time, numeric, and gaps — each with its own error-type controls
+            date/time, numeric, gaps, overlaps, and duplicates — each with its own error-type controls
             where applicable.
           </li>
           <li>
@@ -257,13 +257,48 @@ export function HowToUsePage() {
                 <code>gaps-not-allowed</code>
               </td>
               <td>
-                To (row above) and From (row below) fields with current gap
-                banner; pass column header labels via <code>toLabel</code> and{" "}
-                <code>fromLabel</code>
+                Single “Adjust To/From Value” field for the selected cell;
+                current gap banner when applicable; pass column header labels via{" "}
+                <code>toLabel</code> and <code>fromLabel</code>
               </td>
               <td>
                 <code>toValue</code>, <code>fromValue</code>,{" "}
-                <code>toLabel</code>, <code>fromLabel</code>
+                <code>toLabel</code>, <code>fromLabel</code>,{" "}
+                <code>gapsSelectedField</code>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>overlaps</code>
+              </td>
+              <td>
+                <code>overlaps-not-allowed</code>
+              </td>
+              <td>
+                Same single-field edit UI as gaps with a current overlap banner;
+                values must meet exactly to remove the overlap
+              </td>
+              <td>
+                <code>toValue</code>, <code>fromValue</code>,{" "}
+                <code>toLabel</code>, <code>fromLabel</code>,{" "}
+                <code>gapsSelectedField</code>, <code>intervalCrossValidation</code>
+              </td>
+            </tr>
+            <tr>
+              <td>
+                <code>duplicates</code>
+              </td>
+              <td>
+                <code>duplicates-not-allowed</code>
+              </td>
+              <td>
+                Delete this row or edit one column manually;{" "}
+                <code>cellCount</code> is the number of duplicate rows
+              </td>
+              <td>
+                <code>toValue</code>, <code>fromValue</code>,{" "}
+                <code>toLabel</code>, <code>fromLabel</code>,{" "}
+                <code>gapsSelectedField</code>, row count
               </td>
             </tr>
           </tbody>
