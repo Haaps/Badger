@@ -70,6 +70,10 @@
   color: var(--neutral-350);
 }
 
+.iconDefaultStepOne {
+  color: var(--neutral-500);
+}
+
 .iconDisabled {
   color: var(--neutral-100);
 }

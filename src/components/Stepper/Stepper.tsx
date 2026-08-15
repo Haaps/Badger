@@ -109,7 +109,7 @@ function StepperItem({
     previewState === "hover" || (hovered && enabled && !isSelected && !isDisabled);
   const showActiveRegion = isSelected || showHover;
 
-  const iconVariant = isSelected && stepNumber === 1
+  const iconVariant = isSelected
     ? "selected"
     : isDisabled
       ? "disabled"
@@ -118,7 +118,8 @@ function StepperItem({
   const iconClassNames = [
     styles.icon,
     iconVariant === "selected" && styles.iconSelected,
-    iconVariant === "default" && styles.iconDefault,
+    iconVariant === "default" && stepNumber === 1 && styles.iconDefaultStepOne,
+    iconVariant === "default" && stepNumber !== 1 && styles.iconDefault,
     iconVariant === "disabled" && styles.iconDisabled,
   ]
     .filter(Boolean)

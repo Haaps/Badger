@@ -142,7 +142,8 @@ export function MyView() {
 }
 
 // Step i is enabled when i === 0 or i <= enabledThroughStepIndex + 1.
-// Selected step 1 uses the filled teal icon; other states use Streamline outline icons.`,
+// Selected steps use the filled teal Streamline icon for that step number.
+// Step 1 default uses a distinct outline icon; steps 2–4 use outline icons when not selected.`,
 };
 
 export const buttonUsage = {
