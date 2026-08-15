@@ -215,7 +215,7 @@ const CELL_COUNT_HINT =
 const SHARED_HINTS = [
   "Select or enter a value — Stage Change enables.",
   "Switch to Apply to drill holes — the hole multi-select fills the remaining space and scrolls.",
-  "Click the SUMMARY bar to collapse and expand the panel.",
+  "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
   "In staged state, change the value or apply scope — Update Staged Value enables.",
   "In staged or approved state, use Show/Hide details to compare the new value with the previous invalid value.",
 ];
@@ -272,7 +272,7 @@ export function SummaryPanelBooleanPage() {
         CELL_COUNT_HINT,
         "Choose True or False — Stage Change enables.",
         "Switch to Apply to drill holes — the hole multi-select fills the remaining space and scrolls.",
-        "Click the SUMMARY bar to collapse and expand the panel.",
+        "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
         "In staged state, change the value or apply scope — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the new value with the previous invalid value.",
       ]}
@@ -295,7 +295,7 @@ export function SummaryPanelDatePage() {
         "Invalid dates show a field error and keep Stage Change disabled.",
         "The format hint beside the Date label comes from your column schema (demo: yyyy/mm/dd).",
         "Switch to Apply to drill holes — the hole multi-select fills the remaining space and scrolls.",
-        "Click the SUMMARY bar to collapse and expand the panel.",
+        "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
         "In staged state, change the value or apply scope — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the new value with the previous invalid value.",
       ]}
@@ -318,7 +318,7 @@ export function SummaryPanelDateTimePage() {
         "Invalid values show a field error and keep Stage Change disabled.",
         "The format hint beside the Date Time label comes from your column schema (demo: yyyy/mm/dd hh:mm:ss).",
         "Switch to Apply to drill holes — the hole multi-select fills the remaining space and scrolls.",
-        "Click the SUMMARY bar to collapse and expand the panel.",
+        "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
         "In staged state, change the value or apply scope — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the new value with the previous invalid value.",
       ]}
@@ -413,7 +413,7 @@ export function SummaryPanelGapsPage() {
         "Click the To or From error cell — summary copy and the edit field reflect which cell you selected.",
         "Enter a matching numeric value — Stage Change enables when it equals the adjacent row boundary.",
         "Field errors appear for invalid numbers or when the value still does not match.",
-        "Click the SUMMARY bar to collapse and expand the panel.",
+        "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
         "In staged state, change the values — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the new values with the previous gap.",
       ]}
@@ -440,7 +440,7 @@ export function SummaryPanelOverlapsPage() {
         "Click the To or From error cell — summary copy and the edit field reflect which cell you selected.",
         "Enter a matching numeric value — Stage Change enables when it equals the adjacent row boundary.",
         "Corrections that would create a duplicate interval on an adjacent row are blocked.",
-        "Click the SUMMARY bar to collapse and expand the panel.",
+        "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
         "In staged state, change the values — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the new values with the previous overlap.",
       ]}
@@ -461,7 +461,7 @@ export function SummaryPanelDuplicatesPage() {
         "Choose Delete this row to remove the selected row, or Edit values manually to change the interval.",
         "Manual edit shows one field for the selected column — Stage Change enables when the interval differs from the duplicate.",
         "Field errors appear for invalid numbers or when values still match the duplicate interval.",
-        "Click the SUMMARY bar to collapse and expand the panel.",
+        "Click the ERROR RESOLUTION bar to collapse and expand the panel.",
         "In staged state, switch resolution or edit values — Update Staged Value enables.",
         "In staged or approved state, use Show/Hide details to compare the resolution with the previous interval.",
       ]}

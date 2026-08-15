@@ -113,6 +113,38 @@ export function MyView() {
 }`,
 };
 
+export const stepperUsage = {
+  filesToCopy: "Copy src/components/Stepper/ into your project.",
+  requirements: SHARED_REQUIREMENTS,
+  code: `import { useState } from "react";
+import { Stepper } from "@/components/Stepper";
+
+const steps = [
+  { label: "Upload" },
+  { label: "Configure" },
+  { label: "Map" },
+  { label: "Validate & Export" },
+];
+
+export function MyView() {
+  const [enabledThroughStepIndex, setEnabledThroughStepIndex] = useState(0);
+  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+
+  return (
+    <Stepper
+      steps={steps}
+      enabledThroughStepIndex={enabledThroughStepIndex}
+      currentStepIndex={currentStepIndex}
+      onStepChange={setCurrentStepIndex}
+      aria-label="Workflow progress"
+    />
+  );
+}
+
+// Step i is enabled when i === 0 or i <= enabledThroughStepIndex + 1.
+// Selected step 1 uses the filled teal icon; other states use Streamline outline icons.`,
+};
+
 export const buttonUsage = {
   filesToCopy: "Copy src/components/Button/ into your project.",
   requirements: SHARED_REQUIREMENTS,

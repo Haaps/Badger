@@ -41,13 +41,13 @@
   padding: var(--padding-small) var(--padding-x-small);
   border: none;
   border-right: var(--stroke-regular) solid var(--neutral-100);
-  background: var(--neutral-50);
+  background: var(--neutral-500);
   cursor: pointer;
   transition: background 150ms ease;
 }
 
 .sidebar:hover {
-  background: var(--neutral-100);
+  background: var(--neutral-450);
 }
 
 .sidebar:focus-visible {
@@ -66,7 +66,7 @@
   display: block;
   width: 10px;
   height: 10px;
-  color: var(--neutral-500);
+  color: var(--neutral-0);
 }
 
 .sidebarChevronExpanded {
@@ -82,14 +82,14 @@
   align-items: center;
   justify-content: center;
   width: 9px;
-  height: 63px;
+  height: auto;
   margin: 0;
   font-family: var(--typography-font-family);
   font-size: var(--typography-xs-regular-font-size);
   font-weight: var(--typography-base-bold-font-weight);
   line-height: var(--typography-xs-regular-line-height);
   letter-spacing: var(--typography-xs-regular-letter-spacing);
-  color: var(--neutral-500);
+  color: var(--neutral-0);
   writing-mode: vertical-rl;
   transform: rotate(180deg);
   white-space: nowrap;

@@ -2476,7 +2476,7 @@ export function SummaryPanel({
       >
         <div className={styles.sidebarInner}>
           <SidebarChevronIcon className={chevronClassNames} />
-          <p className={styles.sidebarLabel}>SUMMARY</p>
+          <p className={styles.sidebarLabel}>ERROR RESOLUTION</p>
         </div>
       </button>
 
