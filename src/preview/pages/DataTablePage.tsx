@@ -41,7 +41,7 @@ export function DataTablePage() {
             </li>
             <li>Click another colored cell — the panel content swaps.</li>
             <li>
-              Collapse the panel with the X or SUMMARY bar — the table expands
+              Collapse the panel with the X or ERROR RESOLUTION bar — the table expands
               back.
             </li>
             <li>Hover rows to see the neutral/50 highlight on white cells.</li>

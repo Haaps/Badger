@@ -21,6 +21,7 @@ import {
   SummaryPanelDuplicatesPage,
 } from "./pages/SummaryPanelPage";
 import { SwitchPage } from "./pages/SwitchPage";
+import { StepperPage } from "./pages/StepperPage";
 import { TextFieldPage } from "./pages/TextFieldPage";
 import { TextAreaFieldPage } from "./pages/TextAreaFieldPage";
 import { TokensPage } from "./pages/TokensPage";
@@ -82,6 +83,11 @@ export const componentCatalog: ComponentEntry[] = [
     path: "segmented-control",
     label: "Segmented Control",
     Page: SegmentedControlPage,
+  },
+  {
+    path: "stepper",
+    label: "Stepper",
+    Page: StepperPage,
   },
   {
     path: "multi-select-menu",

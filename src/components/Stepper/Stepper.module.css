@@ -1,0 +1,101 @@
+.root {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  min-width: 0;
+  border: var(--stroke-regular) solid var(--neutral-100);
+  border-radius: 38px;
+  background: var(--surface-0);
+  overflow: hidden;
+}
+
+.step {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  min-width: 0;
+  padding: var(--padding-medium);
+  gap: 10px;
+  border-right: var(--stroke-regular) solid var(--neutral-100);
+}
+
+.stepFirst {
+  border-top-left-radius: 40px;
+  border-bottom-left-radius: 40px;
+}
+
+.stepLast {
+  border-right: none;
+}
+
+.stepActiveRegion {
+  background: var(--teal-50);
+}
+
+.stepButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.stepButton:disabled {
+  cursor: not-allowed;
+}
+
+.stepButton:focus-visible {
+  outline: 2px solid var(--teal-500);
+  outline-offset: -2px;
+  border-radius: var(--corner-radius-small);
+}
+
+.icon {
+  display: block;
+  flex-shrink: 0;
+  width: var(--icon-sizes-regular);
+  height: var(--icon-sizes-regular);
+}
+
+.iconSelected {
+  color: var(--teal-500);
+}
+
+.iconDefault {
+  color: var(--neutral-350);
+}
+
+.iconDisabled {
+  color: var(--neutral-100);
+}
+
+.label {
+  min-width: 0;
+  font-family: var(--typography-font-family);
+  font-size: var(--typography-large-regular-font-size);
+  font-weight: var(--typography-large-regular-font-weight);
+  line-height: var(--typography-large-regular-line-height);
+  letter-spacing: var(--typography-large-regular-letter-spacing);
+  color: var(--neutral-350);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.labelSelected {
+  font-weight: var(--typography-large-medium-font-weight);
+  color: var(--neutral-500);
+}
+
+.labelDisabled {
+  color: var(--neutral-100);
+}
+
+.stepButton:hover:not(:disabled) .label:not(.labelDisabled):not(.labelSelected) {
+  color: var(--neutral-350);
+}

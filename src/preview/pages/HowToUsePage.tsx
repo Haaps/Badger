@@ -45,7 +45,7 @@ export function HowToUsePage() {
         </p>
         <ul className={styles.list}>
           <li>
-            <strong>Checkbox, Radio, Switch, SingleSelect, SummaryPanel</strong>{" "}
+            <strong>Checkbox, Radio, Switch, SingleSelect, SummaryPanel, Stepper</strong>{" "}
             — icons live alongside the component.
           </li>
           <li>
